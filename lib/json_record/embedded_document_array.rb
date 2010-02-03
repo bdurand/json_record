@@ -4,9 +4,9 @@ module JsonRecord
       @klass = klass
       @parent = parent
       objects = objects.collect do |obj|
-        if obj.is_a?(Hash)
-          @klass.new(obj)
-        elsif obj.is_a?(@klass)
+        obj = @klass.new(obj) if obj.is_a?(Hash)
+        if obj.is_a?(@klass)
+          obj.parent = parent
           obj
         else
           raise ArgumentError.new("#{obj.inspect} is not a #{@klass}") unless obj.is_a?(@klass)
@@ -18,21 +18,24 @@ module JsonRecord
     def << (obj)
       obj = @klass.new(obj) if obj.is_a?(Hash)
       raise ArgumentError.new("#{obj.inspect} is not a #{@klass}") unless obj.is_a?(@klass)
-      obj.parent = parent
+      obj.parent = @parent
       super(obj)
     end
     
     def concat (objects)
-      objects.each do |obj|
+      objects = objects.collect do |obj|
+        obj = @klass.new(obj) if obj.is_a?(Hash)
         raise ArgumentError.new("#{obj.inspect} is not a #{@klass}") unless obj.is_a?(@klass)
-        obj.parent = parent
+        obj.parent = @parent
+        obj
       end
-      super
+      super(objects)
     end
     
     def build (obj)
       obj = @klass.new(obj) if obj.is_a?(Hash)
-      obj.parent = parent
+      raise ArgumentError.new("#{obj.inspect} is not a #{@klass}") unless obj.is_a?(@klass)
+      obj.parent = @parent
       self << obj
       obj
     end

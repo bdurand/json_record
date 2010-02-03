@@ -1,4 +1,5 @@
 module JsonRecord
+  # A definition of a JSON field in a Schema.
   class FieldDefinition
     BOOLEAN_MAPPING = {
       true => true, 'true' => true, 'TRUE' => true, 'True' => true, 't' => true, 'T' => true, '1' => true, 1 => true, 1.0 => true,
@@ -7,64 +8,69 @@ module JsonRecord
     
     attr_reader :name, :type, :default
     
+    # Define a field. Options should include :type with the class of the field. Other options available are
+    # :multivalued and :default.
     def initialize (name, options = {})
       @name = name.to_s
       @type = options[:type] || String
-      @multivalued = options[:multivalued]
+      @multivalued = !!options[:multivalued]
       @default = options[:default]
     end
     
+    # Indicates the field is multivalued.
     def multivalued?
       @multivalued
     end
     
+    # Convert a value to the proper class for storing it in the field. If the value can't be converted,
+    # the original value will be returned. Blank values are always translated to nil.
     def convert (val)
       return nil if val.blank?
-      begin
-        if @type == String
-          return val.to_s
-        elsif @type == Integer
-          return Kernel.Integer(val)
-        elsif @type == Float
-          return Kernel.Float(val)
-        elsif @type == Boolean
-          v = BOOLEAN_MAPPING[val]
-          v = val.to_s.downcase == 'true' if v.nil? # Check all mixed case spellings for true
-          return v
-        elsif @type == Date
-          if val.is_a?(Date)
-            return val
-          elsif val.is_a?(Time)
-            return val.to_date
-          else
-            return Date.parse(val.to_s)
-          end
-        elsif @type == Time
-          if val.is_a?(Time)
-            return Time.at((val.to_i / 60) * 60).utc
-          else
-            return Time.parse(val).utc
-          end
-        elsif @type == DateTime
-          if val.is_a?(DateTime)
-            return val.utc
-          else
-            return DateTime.parse(val).utc
-          end
-        elsif @type == Array
-          val = [val] unless val.is_a?(Array)
+      if @type == String
+        return val.to_s
+      elsif @type == Integer
+        return Kernel.Integer(val) rescue val
+      elsif @type == Float
+        return Kernel.Float(val) rescue val
+      elsif @type == Boolean
+        v = BOOLEAN_MAPPING[val]
+        v = val.to_s.downcase == 'true' if v.nil? # Check all mixed case spellings for true
+        return v
+      elsif @type == Date
+        if val.is_a?(Date)
           return val
+        elsif val.is_a?(Time)
+          return val.to_date
         else
-          if val.is_a?(@type)
-            val
-          elsif val.is_a?(Hash) and (@type < EmbeddedDocument)
-            return @type.new(val)
-          else
-            return val
-          end
+          return Date.parse(val.to_s) rescue val
         end
-      rescue
+      elsif @type == Time
+        if val.is_a?(Time)
+          return Time.at((val.to_i / 60) * 60).utc
+        else
+          return Time.parse(val).utc rescue val
+        end
+      elsif @type == DateTime
+        if val.is_a?(DateTime)
+          return val.utc
+        else
+          return DateTime.parse(val).utc rescue val
+        end
+      elsif @type == Array
+        val = [val] unless val.is_a?(Array)
+        raise ArgumentError.new("#{name} must be an Array") unless val.is_a?(Array)
         return val
+      elsif @type == Hash
+        raise ArgumentError.new("#{name} must be a Hash") unless val.is_a?(Hash)
+        return val
+      else
+        if val.is_a?(@type)
+          val
+        elsif val.is_a?(Hash) and (@type < EmbeddedDocument)
+          return @type.new(val)
+        else
+          raise ArgumentError.new("#{name} must be a #{@type}")
+        end
       end
     end
     

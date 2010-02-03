@@ -6,11 +6,12 @@ module JsonRecord
     def destroy (*args); end;
     def create (*args); end;
     def update (*args); end;
+    def new_record?; false; end;
   end
   
   class EmbeddedDocument
     include ActiveRecordStub
-    #include ActiveRecord::Validations
+    include ActiveRecord::Validations
     include AttributeMethods
     
     class_inheritable_reader :schema
@@ -24,6 +25,18 @@ module JsonRecord
       def many (name, *args)
         write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
         schema.many(name, *args)
+      end
+      
+      def human_name (options = {})
+        name.split('::').last.humanize
+      end
+      
+      def human_attribute_name (attribute, options = {})
+        attribute.to_s.humanize
+      end
+      
+      def self_and_descendants_from_active_record
+        [self]
       end
     end
     
@@ -54,7 +67,7 @@ module JsonRecord
     end
 
     def changes
-      changed.inject({}) { |h, attr| h[attr] = attribute_change(attr); h }
+      changed.inject({}) {|h, attr| h[attr] = attribute_change(attr); h}
     end
     
     def to_json (*args)
@@ -62,13 +75,21 @@ module JsonRecord
     end
     
     def eql? (val)
-      val.class == self.class && val.attributes == attributes && value.parent == parent
+      val.class == self.class && val.attributes == attributes && val.parent == parent
+    end
+    
+    def == (val)
+      eql?(val)
+    end
+    
+    def hash
+      attributes.hash + parent.hash
     end
     
     protected
     
     def read_json_attribute (json_field_name, field)
-      read_attribute(field)
+      read_attribute(field, self)
     end
     
     def write_json_attribute (json_field_name, field, value, track_changes)
@@ -89,7 +110,7 @@ module JsonRecord
     
     def attribute_change (name)
       name = name.to_s
-      [changed_attributes[name], read_json_attribute(name)] if attribute_changed?(name)
+      [changed_attributes[name], read_json_attribute(nil, schema.fields[name])] if attribute_changed?(name)
     end
     
     def attribute_was (name)

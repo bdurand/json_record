@@ -2,34 +2,28 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
 
 describe JsonRecord::FieldDefinition do
   
-  it "should have a name that is a string"
+  it "should have a name that is a string" do
+    field = JsonRecord::FieldDefinition.new("name", :type => Integer)
+    field.name.should == "name"
+  end
   
-  it "should have a type"
+  it "should have a type" do
+    field = JsonRecord::FieldDefinition.new("name", :type => Integer)
+    field.type.should == Integer
+  end
   
-  it "can be multivalued"
+  it "should have a default" do
+    field = JsonRecord::FieldDefinition.new("name", :type => Integer)
+    field.default.should == nil
+    field = JsonRecord::FieldDefinition.new("name", :type => Integer, :default => 10)
+    field.default.should == 10
+  end
   
-  it "should convert blank values to nil"
-  
-  it "should convert values to strings"
-  
-  it "should convert values to integers"
-  
-  it "should convert values to floats"
-  
-  it "should convert values to dates"
-  
-  it "should convert values to times"
-  
-  it "should convert values to datetimes"
-  
-  it "should convert values to booleans"
-  
-  it "should convert values to array"
-  
-  it "should convert a hash to an embedded document"
-  
-  it "should not convert values that are already of the right class"
-  
-  it "should leave a value unconverted if it can't be converted"
+  it "can be multivalued" do
+    field = JsonRecord::FieldDefinition.new("name", :type => Integer)
+    field.multivalued?.should == false
+    field = JsonRecord::FieldDefinition.new("name", :type => Integer, :multivalued => true)
+    field.multivalued?.should == true
+  end
   
 end

@@ -1,5 +1,8 @@
 module JsonRecord
+  # Internal methods for reading and writing fields serialized from JSON.
   module AttributeMethods
+    # Read a field. The field param must be a FieldDefinition and the context should be the record
+    # which is being read from.
     def read_attribute (field, context)
       if field.multivalued?
         arr = attributes[field.name]
@@ -18,8 +21,11 @@ module JsonRecord
       end
     end
 
+    # Write a field. The field param must be a FieldDefinition and the context should be the record
+    # which is being read from. Track_changes indicates if changes to the object should be tracked.
     def write_attribute (field, val, track_changes, context)
       if field.multivalued?
+        val = val.values if val.is_a?(Hash)
         attributes[field.name] = EmbeddedDocumentArray.new(field.type, context, val)
       else
         old_value = read_attribute(field, context)

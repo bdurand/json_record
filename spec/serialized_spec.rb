@@ -1,28 +1,12 @@
 require File.expand_path(File.join(File.dirname(__FILE__), 'spec_helper'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'test_models'))
 
 describe JsonRecord::Serialized do
   before(:all) do
-    @db_dir = File.expand_path(File.join(__FILE__, '..', 'tmp'))
-    Dir.mkdir(@db_dir) unless File.exist?(@db_dir)
-    @db = File.join(@db_dir, 'test_JsonRecord.sqlite3')
-    JsonRecord::Test::Model.establish_connection("adapter" => "sqlite3", "database" => @db)
-    JsonRecord::Test::Model.connection.create_table(:models) do |t|
-      t.text :json
-      t.binary :compressed_json
-      t.string :string_field
-    end unless JsonRecord::Test::Model.table_exists?
-    JsonRecord::Test::SubModel.connection.create_table(:sub_models) do |t|
-      t.text :json
-      t.binary :compressed_json
-      t.string :string_field
-    end unless JsonRecord::Test::SubModel.table_exists?
+    JsonRecord::Test.create_tables
   end
   
   after(:all) do
-    JsonRecord::Test::Model.connection.disconnect!
-    File.delete(@db)
-    Dir.delete(@db_dir) if Dir.entries(@db_dir).reject{|f| f.match(/^\.+$/)}.empty?
+    JsonRecord::Test.drop_tables
   end
   
   it "should have accessors for json attributes" do
@@ -126,8 +110,7 @@ describe JsonRecord::Serialized do
     model.verified_at.should == "2001-100-100"
     model.viewed_at = "the year 2000"
     model.viewed_at.should == "the year 2000"
-    model.primary_trait = "stuff"
-    model.primary_trait.should == "stuff"
+    lambda{model.primary_trait = "stuff"}.should raise_error(ArgumentError)
   end
   
   it "should mix the json attributes into the regular attribute minus the json field itself" do
@@ -168,6 +151,7 @@ describe JsonRecord::Serialized do
       "when"=>nil,
       "primary_trait"=>nil
     }
+    JsonRecord::Test::Model.new.attributes["traits"].should be_a(JsonRecord::EmbeddedDocumentArray)
   end
   
   it "should allow mass assignment of json attributes" do
@@ -233,21 +217,74 @@ describe JsonRecord::Serialized do
     model.name_change.should == nil
   end
   
-  it "should validate the presence of a json attribute"
+  it "should validate the presence of a json attribute" do
+    model = JsonRecord::Test::Model.new
+    model.valid?.should == false
+    model.errors.on(:name).should_not == nil
+    model.name = "woo"
+    model.valid?.should == true
+  end
   
-  it "should validate the length of a json attribute"
+  it "should validate the length of a json attribute" do
+    model = JsonRecord::Test::Model.new(:name => "this name value is way too long", :field_4 => "a", :field_5 => "b")
+    model.valid?.should == false
+    model.errors.on(:name).should_not == nil
+    model.errors.on(:field_4).should_not == nil
+    model.errors.on(:field_5).should_not == nil
+    model.name = "shorter name"
+    model.field_4 = "a much longer name that won't fit"
+    model.field_5 = "a much longer name that will fit because it is OK"
+    model.valid?.should == false
+    model.errors.on(:name).should == nil
+    model.errors.on(:field_4).should_not == nil
+    model.errors.on(:field_5).should == nil
+    model.field_4 = "just right"
+    model.valid?.should == true
+  end
   
-  it "should validate that a json attribute is in a value"
+  it "should validate the type of a json attribute" do
+    model = JsonRecord::Test::Model.new(:name => "test name", :value => "purple", :price => "free", :when => "2010-40-52", :verified_at => "2010-40-50T00:00:00", :viewed_at => "2010-02-01T00:90:00")
+    model.valid?.should == false
+    model.errors.on(:value).should_not == nil
+    model.errors.on(:price).should_not == nil
+    model.errors.on(:when).should_not == nil
+    model.errors.on(:verified_at).should_not == nil
+    model.errors.on(:viewed_at).should_not == nil
+    model.value = "1"
+    model.price = "100"
+    model.when = "2010-02-01"
+    model.verified_at = Time.now.to_s
+    model.viewed_at = DateTime.now.to_s
+    model.valid?.should == true
+  end
   
-  it "should validate the type of a json attribute"
+  it "should validate that a json attribute is in a range" do
+    model = JsonRecord::Test::Model.new(:name => "test name", :field_3 => "Z")
+    model.valid?.should == false
+    model.errors.on(:field_3).should_not == nil
+    model.field_3 = "B"
+    model.valid?.should == true
+  end
   
-  it "should validate that a json attribute is in a range"
+  it "should validate the format of a json attribute" do
+    model = JsonRecord::Test::Model.new(:name => "test name", :field_2 => "ABC")
+    model.valid?.should == false
+    model.errors.on(:field_2).should_not == nil
+    model.field_2 = "abc"
+    model.valid?.should == true
+  end
   
-  it "should validate the format of a json attribute"
-  
-  it "should reload the json attributes when the record is reloaded"
-  
-  it "should save and find the record with no problems"
+  it "should reload the json attributes when the record is reloaded" do
+    model = JsonRecord::Test::Model.new(:name => "test name", :field_1 => "ABC")
+    model.save!
+    model.name = "new name"
+    model.field_1 = "abc"
+    model.name.should == "new name"
+    model.field_1.should == "abc"
+    model.reload
+    model.name.should == "test name"
+    model.field_1.should == "ABC"
+  end
   
   it "should compress data if it is stored in a binary column" do
     model = JsonRecord::Test::Model.new(:name => "test", :field_1 => "one", :field_2 => "two")
@@ -258,6 +295,111 @@ describe JsonRecord::Serialized do
     ActiveSupport::JSON.decode(Zlib::Inflate.inflate(model.compressed_json)).should == {"field_1" => "one", "field_2" => "two"}
   end
   
-  it "should handle nested embedded documents"
+  it "should handle embedded documents" do
+    model = JsonRecord::Test::Model.new(:name => "test", :primary_trait => {:name => "primary", :value => "primary value"})
+    model.primary_trait.name.should == "primary"
+    model.primary_trait.value.should == "primary value"
+    model.primary_trait.parent.should == model
+    
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
+    model.primary_trait.name.should == "primary"
+    model.primary_trait.value.should == "primary value"
+    model.primary_trait.parent.should == model
+    
+    model.primary_trait = JsonRecord::Test::Trait.new(:name => "new", :value => "val")
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
+    model.primary_trait.name.should == "new"
+    model.primary_trait.value.should == "val"
+    model.primary_trait.parent.should == model
+  end
+  
+  it "should handle many embedded documents" do
+    model = JsonRecord::Test::Model.new(:name => "test", :traits => [{:name => "n1", :value => "v1"}, {:name => "n2", :value => "v2"}])
+    model.traits.build(:name => "n3", :value => "v3")
+    model.traits.build(JsonRecord::Test::Trait.new(:name => "n4", :value => "v4"))
+    model.traits << {"name" => "n5", "value" => "v5"}
+    model.traits << JsonRecord::Test::Trait.new("name" => "n6", "value" => "v6")
+    model.traits.concat([{"name" => "n7", "value" => "v7"}, {:name => "n8", :value => "v8"}, JsonRecord::Test::Trait.new("name" => "n9", "value" => "v9")])
+    model.traits.collect{|t| [t.name, t.value]}.should == [["n1", "v1"], ["n2", "v2"], ["n3", "v3"], ["n4", "v4"], ["n5", "v5"], ["n6", "v6"], ["n7", "v7"], ["n8", "v8"], ["n9", "v9"]]
+    model.traits.collect{|t| t.parent}.uniq.should == [model]
+    
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
+    model.traits.collect{|t| [t.name, t.value]}.should == [["n1", "v1"], ["n2", "v2"], ["n3", "v3"], ["n4", "v4"], ["n5", "v5"], ["n6", "v6"], ["n7", "v7"], ["n8", "v8"], ["n9", "v9"]]
+    model.traits.collect{|t| t.parent}.uniq.should == [model]
+    
+    model.traits.slice!(0)
+    model.traits.pop
+    model.traits = model.traits.reverse
+    model.traits[1].name = "name7"
+    model.traits[1].value = "value7"
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
+    model.traits.collect{|t| [t.name, t.value]}.should == [["n8", "v8"], ["name7", "value7"], ["n6", "v6"], ["n5", "v5"], ["n4", "v4"], ["n3", "v3"], ["n2", "v2"]]
+  end
+  
+  it "should handle nested embedded documents" do
+    model = JsonRecord::Test::Model.new(:name => "test")
+    trait = model.traits.build(:name => "n1", :value => "v1")
+    subtrait = trait.sub_traits.build(:name => "s1", :value => "v1")
+    model.traits.should == [trait]
+    model.traits.first.sub_traits.should == [subtrait]
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
+  end
+  
+  it "should be able to set a many key with the values in a hash" do
+    model = JsonRecord::Test::Model.new(:name => "test")
+    model.traits = {"first" => {:name => "n1", :value => "v1"}, "second" => {:name => "n2", :value => "v2"}}
+    model.traits.size.should == 2
+    model.traits.collect{|t| t.name}.sort.should == ["n1", "n2"]
+  end
+  
+  it "should get the json field definition for a field" do
+    JsonRecord::Test::Model.json_field_definition(:value).name.should == "value"
+    JsonRecord::Test::Model.json_field_definition("value").name.should == "value"
+    JsonRecord::Test::Model.json_field_definition("nothing").should == nil
+  end
+  
+  it "should validate uniqueness of embedded documents" do
+    model = JsonRecord::Test::Model.new(:name => "test", :traits => [{:name => "n1", :value => "v1"}, {:name => "n1", :value => "v2"}])
+    model.valid?.should == false
+    model.errors.on(:traits).should_not == nil
+    model.traits.first.errors.on(:name).should == nil
+    model.traits.last.errors.on(:name).should_not == nil
+    
+    model.traits.last.name = "n2"
+    model.valid?.should == true
+    model.errors.on(:traits).should == nil
+    model.traits.first.errors.on(:name).should == nil
+    model.traits.last.errors.on(:name).should == nil
+  end
+  
+  it "should perform validations on embedded documents" do
+    model = JsonRecord::Test::Model.new(:name => "test")
+    model.primary_trait = {:name => "", :value => "v2"}
+    trait = model.traits.build(:value => "v1")
+    subtrait = trait.sub_traits.build(:name => "s1", :count => "plaid")
+    model.valid?.should == false
+    model.errors.on(:primary_trait).should_not == nil
+    model.errors.on(:traits).should_not == nil
+    model.primary_trait.errors.on(:name).should_not == nil
+    trait.errors.on(:name).should_not == nil
+    trait.errors.on(:sub_traits).should_not == nil
+    subtrait.errors.on(:count).should_not == nil
+    
+    model.primary_trait.name = "p1"
+    trait.name = "n1"
+    subtrait.count = 1
+    model.valid?.should == true
+    model.errors.on(:primary_trait).should == nil
+    model.errors.on(:traits).should == nil
+    model.primary_trait.errors.on(:name).should == nil
+    trait.errors.on(:name).should == nil
+    trait.errors.on(:sub_traits).should == nil
+    subtrait.errors.on(:count).should == nil
+  end
   
 end
