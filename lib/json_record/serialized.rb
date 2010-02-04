@@ -61,7 +61,8 @@ module JsonRecord
       end
       
       def attributes_with_serialized_json
-        attrs = attributes_without_serialized_json.merge(json_attributes)
+        attrs = json_attributes.reject{|k,v| !json_field_names.include?(k)}
+        attrs.merge!(attributes_without_serialized_json)
         json_serialized_fields.keys.each{|name| attrs.delete(name)}
         return attrs
       end
@@ -72,9 +73,13 @@ module JsonRecord
       def json_attributes
         attrs = {}
         json_fields.values.each do |field|
-          attrs.merge!(field.attributes)
+          attrs.merge!(field.json_attributes)
         end
         attrs
+      end
+      
+      def json_field_names
+        @json_field_names = json_serialized_fields.values.flatten.collect{|s| s.fields.keys}.flatten
       end
       
       # Read a field value from a JsonField

@@ -1,32 +1,13 @@
 module JsonRecord
-  module ActiveRecordStub
-    private
-    def save (*args); end;
-    def save! (*args); end;
-    def destroy (*args); end;
-    def create (*args); end;
-    def update (*args); end;
-    def new_record?; false; end;
-  end
-  
-  class EmbeddedDocument
-    include ActiveRecordStub
-    include ActiveRecord::Validations
-    include AttributeMethods
+  # OK, this is ugly, but necessary to get ActiveRecord::Errors to be compatible with
+  # EmbeddedDocument. This will all be fixed with Rails 3 and ActiveModel. Until then
+  # we'll just live with this.
+  module ActiveRecordStub #:nodoc:
+    def self.included (base)
+      base.extend(ClassMethods)
+    end
     
-    class_inheritable_reader :schema
-    
-    class << self
-      def key (name, *args)
-        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
-        schema.key(name, *args)
-      end
-      
-      def many (name, *args)
-        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
-        schema.many(name, *args)
-      end
-      
+    module ClassMethods
       def human_name (options = {})
         name.split('::').last.humanize
       end
@@ -40,32 +21,75 @@ module JsonRecord
       end
     end
     
-    attr_accessor :parent
+    private
+    def save (*args); end;
+    def save! (*args); end;
+    def destroy (*args); end;
+    def create (*args); end;
+    def update (*args); end;
+    def new_record?; false; end;
+  end
+  
+  # Subclasses of EmbeddedDocument can be used as the type for keys or many field definitions
+  # in Schema. Embedded documents are then extensions of the schema. In this way, complex
+  # documents represented in JSON can be deserialized as complex objects.
+  class EmbeddedDocument
+    include ActiveRecordStub
+    include ActiveRecord::Validations
+    include AttributeMethods
     
-    def initialize (attributes = {})
-      @attributes = {}
-      @json_attributes = {}
-      attributes.each_pair do |name, value|
-        write_attribute(schema.fields[name.to_s], value, false, self)
+    class_inheritable_reader :schema
+    
+    class << self
+      # Define a field for the schema. This is a shortcut for calling schema.key.
+      # See Schema#key for details. 
+      def key (name, *args)
+        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
+        schema.key(name, *args)
+      end
+      
+      # Define a multivalued field for the schema. This is a shortcut for calling schema.many.
+      # See Schema#many for details. 
+      def many (name, *args)
+        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
+        schema.many(name, *args)
       end
     end
     
-    def attributes
-      @json_attributes
+    # The parent object of the document.
+    attr_accessor :parent
+    
+    # Create an embedded document with the specified attributes.
+    def initialize (attrs = {})
+      @attributes = {}
+      @json_attributes = {}
+      attrs.each_pair do |name, value|
+        field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
+        write_attribute(field, value, false, self)
+      end
     end
     
+    # Get the attributes of the document.
+    def attributes
+      @json_attributes.reject{|k,v| !schema.fields.include?(k)}
+    end
+    
+    # Get the attribute values of the document before they were type cast.
     def attributes_before_type_cast
       @attributes
     end
     
+    # Determine if the document has been changed.
     def changed?
       !changed_attributes.empty?
     end
 
+    # Get the list of attributes changed.
     def changed
       changed_attributes.keys
     end
 
+    # Get a list of changes to the document.
     def changes
       changed.inject({}) {|h, attr| h[attr] = attribute_change(attr); h}
     end
@@ -87,6 +111,10 @@ module JsonRecord
     end
     
     protected
+    
+    def json_attributes
+      @json_attributes
+    end
     
     def read_json_attribute (json_field_name, field)
       read_attribute(field, self)

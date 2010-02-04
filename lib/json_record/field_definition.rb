@@ -6,7 +6,7 @@ module JsonRecord
       false => false, 'false' => false, 'FALSE' => false, 'False' => false, 'f' => false, 'F' => false, '0' => false, 0 => false, 0.0 => false, nil => false
     }
     
-    attr_reader :name, :type, :default
+    attr_reader :name, :type
     
     # Define a field. Options should include :type with the class of the field. Other options available are
     # :multivalued and :default.
@@ -15,6 +15,14 @@ module JsonRecord
       @type = options[:type] || String
       @multivalued = !!options[:multivalued]
       @default = options[:default]
+      if [Hash, Array].include?(@type) and @default.nil?
+        @default = @type.new
+      end
+    end
+    
+    # Get the default value.
+    def default
+      (@default.dup rescue @default )if @default
     end
     
     # Indicates the field is multivalued.
@@ -23,7 +31,8 @@ module JsonRecord
     end
     
     # Convert a value to the proper class for storing it in the field. If the value can't be converted,
-    # the original value will be returned. Blank values are always translated to nil.
+    # the original value will be returned. Blank values are always translated to nil. Hashes will be converted
+    # to EmbeddedDocument objects if the field type extends from EmbeddedDocument.
     def convert (val)
       return nil if val.blank?
       if @type == String

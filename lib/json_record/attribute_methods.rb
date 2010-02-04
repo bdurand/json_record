@@ -5,17 +5,17 @@ module JsonRecord
     # which is being read from.
     def read_attribute (field, context)
       if field.multivalued?
-        arr = attributes[field.name]
+        arr = json_attributes[field.name]
         unless arr
           arr = EmbeddedDocumentArray.new(field.type, context)
-          attributes[field.name] = arr
+          json_attributes[field.name] = arr
         end
         return arr
       else
-        val = attributes[field.name]
+        val = json_attributes[field.name]
         if val.nil? and !field.default.nil?
-          val = field.default
-          attributes[field.name] = val
+          val = field.default.dup rescue field.default
+          json_attributes[field.name] = val
         end
         return val
       end
@@ -26,7 +26,7 @@ module JsonRecord
     def write_attribute (field, val, track_changes, context)
       if field.multivalued?
         val = val.values if val.is_a?(Hash)
-        attributes[field.name] = EmbeddedDocumentArray.new(field.type, context, val)
+        json_attributes[field.name] = EmbeddedDocumentArray.new(field.type, context, val)
       else
         old_value = read_attribute(field, context)
         converted_value = field.convert(val)
@@ -42,9 +42,9 @@ module JsonRecord
             end
           end
           unless converted_value.nil?
-            attributes[field.name] = converted_value
+            json_attributes[field.name] = converted_value
           else
-            attributes.delete(field.name)
+            json_attributes.delete(field.name)
           end
         end
         context.attributes_before_type_cast[field.name] = val

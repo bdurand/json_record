@@ -42,7 +42,7 @@ module JsonRecord
       end
     end
     
-    def attributes
+    def json_attributes
       deserialize unless @attributes
       @attributes
     end
