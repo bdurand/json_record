@@ -253,16 +253,16 @@ describe JsonRecord::Serialized do
   it "should validate the length of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "this name value is way too long", :field_4 => "a", :field_5 => "b")
     model.valid?.should == false
-    model.errors[:name].should_not == nil
-    model.errors[:field_4].should_not == nil
-    model.errors[:field_5].should_not == nil
+    model.errors[:name].should_not be_empty
+    model.errors[:field_4].should_not be_empty
+    model.errors[:field_5].should_not be_empty
     model.name = "shorter name"
     model.field_4 = "a much longer name that won't fit"
     model.field_5 = "a much longer name that will fit because it is OK"
     model.valid?.should == false
-    model.errors[:name].should == nil
-    model.errors[:field_4].should_not == nil
-    model.errors[:field_5].should == nil
+    model.errors[:name].should be_empty
+    model.errors[:field_4].should_not be_empty
+    model.errors[:field_5].should be_empty
     model.field_4 = "just right"
     model.valid?.should == true
   end
@@ -392,14 +392,14 @@ describe JsonRecord::Serialized do
     model = JsonRecord::Test::Model.new(:name => "test", :traits => [{:name => "n1", :value => "v1"}, {:name => "n1", :value => "v2"}])
     model.valid?.should == false
     model.errors[:traits].should_not == nil
-    model.traits.first.errors[:name].should == nil
-    model.traits.last.errors[:name].should_not == nil
+    model.traits.first.errors[:name].should be_empty
+    model.traits.last.errors[:name].should_not be_empty
     
     model.traits.last.name = "n2"
     model.valid?.should == true
-    model.errors[:traits].should == nil
-    model.traits.first.errors[:name].should == nil
-    model.traits.last.errors[:name].should == nil
+    model.errors[:traits].should be_empty
+    model.traits.first.errors[:name].should be_empty
+    model.traits.last.errors[:name].should be_empty
   end
   
   it "should perform validations on embedded documents" do
@@ -408,23 +408,23 @@ describe JsonRecord::Serialized do
     trait = model.traits.build(:value => "v1")
     subtrait = trait.sub_traits.build(:name => "s1", :count => "plaid")
     model.valid?.should == false
-    model.errors[:primary_trait].should_not == nil
-    model.errors[:traits].should_not == nil
-    model.primary_trait.errors[:name].should_not == nil
-    trait.errors[:name].should_not == nil
-    trait.errors[:sub_traits].should_not == nil
-    subtrait.errors[:count].should_not == nil
+    model.errors[:primary_trait].should_not be_empty
+    model.errors[:traits].should_not be_empty
+    model.primary_trait.errors[:name].should_not be_empty
+    trait.errors[:name].should_not be_empty
+    trait.errors[:sub_traits].should_not be_empty
+    subtrait.errors[:count].should_not be_empty
     
     model.primary_trait.name = "p1"
     trait.name = "n1"
     subtrait.count = 1
     model.valid?.should == true
-    model.errors[:primary_trait].should == nil
-    model.errors[:traits].should == nil
-    model.primary_trait.errors[:name].should == nil
-    trait.errors[:name].should == nil
-    trait.errors[:sub_traits].should == nil
-    subtrait.errors[:count].should == nil
+    model.errors[:primary_trait].should be_empty
+    model.errors[:traits].should be_empty
+    model.primary_trait.errors[:name].should be_empty
+    trait.errors[:name].should be_empty
+    trait.errors[:sub_traits].should be_empty
+    subtrait.errors[:count].should be_empty
   end
   
 end
