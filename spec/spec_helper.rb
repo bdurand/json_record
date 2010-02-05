@@ -1,8 +1,8 @@
 require 'rubygems'
 
-if ENV["ACTIVE_RECORD_VERSION"]
-  gem 'activerecord', ENV["ACTIVE_RECORD_VERSION"]
-end
+active_record_version = ENV["ACTIVE_RECORD_VERSION"] || [">= 2.1", "< 3.0"]
+active_record_version = [active_record_version] unless active_record_version.is_a?(Array)
+gem 'activerecord', *active_record_version
 
 require 'spec'
 require 'active_record'
