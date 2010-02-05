@@ -19,6 +19,10 @@ module JsonRecord
       def self_and_descendants_from_active_record
         [self]
       end
+      
+      def self_and_descendents_from_active_record
+        [self]
+      end
     end
     
     private
