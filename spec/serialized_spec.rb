@@ -245,7 +245,7 @@ describe JsonRecord::Serialized do
   it "should validate the presence of a json attribute" do
     model = JsonRecord::Test::Model.new
     model.valid?.should == false
-    model.errors.on(:name).should_not == nil
+    model.errors[:name].should_not == nil
     model.name = "woo"
     model.valid?.should == true
   end
@@ -253,16 +253,16 @@ describe JsonRecord::Serialized do
   it "should validate the length of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "this name value is way too long", :field_4 => "a", :field_5 => "b")
     model.valid?.should == false
-    model.errors.on(:name).should_not == nil
-    model.errors.on(:field_4).should_not == nil
-    model.errors.on(:field_5).should_not == nil
+    model.errors[:name].should_not == nil
+    model.errors[:field_4].should_not == nil
+    model.errors[:field_5].should_not == nil
     model.name = "shorter name"
     model.field_4 = "a much longer name that won't fit"
     model.field_5 = "a much longer name that will fit because it is OK"
     model.valid?.should == false
-    model.errors.on(:name).should == nil
-    model.errors.on(:field_4).should_not == nil
-    model.errors.on(:field_5).should == nil
+    model.errors[:name].should == nil
+    model.errors[:field_4].should_not == nil
+    model.errors[:field_5].should == nil
     model.field_4 = "just right"
     model.valid?.should == true
   end
@@ -270,11 +270,11 @@ describe JsonRecord::Serialized do
   it "should validate the type of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "test name", :value => "purple", :price => "free", :when => "2010-40-52", :verified_at => "2010-40-50T00:00:00", :viewed_at => "2010-02-01T00:90:00")
     model.valid?.should == false
-    model.errors.on(:value).should_not == nil
-    model.errors.on(:price).should_not == nil
-    model.errors.on(:when).should_not == nil
-    model.errors.on(:verified_at).should_not == nil
-    model.errors.on(:viewed_at).should_not == nil
+    model.errors[:value].should_not == nil
+    model.errors[:price].should_not == nil
+    model.errors[:when].should_not == nil
+    model.errors[:verified_at].should_not == nil
+    model.errors[:viewed_at].should_not == nil
     model.value = "1"
     model.price = "100"
     model.when = "2010-02-01"
@@ -286,7 +286,7 @@ describe JsonRecord::Serialized do
   it "should validate that a json attribute is in a range" do
     model = JsonRecord::Test::Model.new(:name => "test name", :field_3 => "Z")
     model.valid?.should == false
-    model.errors.on(:field_3).should_not == nil
+    model.errors[:field_3].should_not == nil
     model.field_3 = "B"
     model.valid?.should == true
   end
@@ -294,7 +294,7 @@ describe JsonRecord::Serialized do
   it "should validate the format of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "test name", :field_2 => "ABC")
     model.valid?.should == false
-    model.errors.on(:field_2).should_not == nil
+    model.errors[:field_2].should_not == nil
     model.field_2 = "abc"
     model.valid?.should == true
   end
@@ -391,15 +391,15 @@ describe JsonRecord::Serialized do
   it "should validate uniqueness of embedded documents" do
     model = JsonRecord::Test::Model.new(:name => "test", :traits => [{:name => "n1", :value => "v1"}, {:name => "n1", :value => "v2"}])
     model.valid?.should == false
-    model.errors.on(:traits).should_not == nil
-    model.traits.first.errors.on(:name).should == nil
-    model.traits.last.errors.on(:name).should_not == nil
+    model.errors[:traits].should_not == nil
+    model.traits.first.errors[:name].should == nil
+    model.traits.last.errors[:name].should_not == nil
     
     model.traits.last.name = "n2"
     model.valid?.should == true
-    model.errors.on(:traits).should == nil
-    model.traits.first.errors.on(:name).should == nil
-    model.traits.last.errors.on(:name).should == nil
+    model.errors[:traits].should == nil
+    model.traits.first.errors[:name].should == nil
+    model.traits.last.errors[:name].should == nil
   end
   
   it "should perform validations on embedded documents" do
@@ -408,23 +408,23 @@ describe JsonRecord::Serialized do
     trait = model.traits.build(:value => "v1")
     subtrait = trait.sub_traits.build(:name => "s1", :count => "plaid")
     model.valid?.should == false
-    model.errors.on(:primary_trait).should_not == nil
-    model.errors.on(:traits).should_not == nil
-    model.primary_trait.errors.on(:name).should_not == nil
-    trait.errors.on(:name).should_not == nil
-    trait.errors.on(:sub_traits).should_not == nil
-    subtrait.errors.on(:count).should_not == nil
+    model.errors[:primary_trait].should_not == nil
+    model.errors[:traits].should_not == nil
+    model.primary_trait.errors[:name].should_not == nil
+    trait.errors[:name].should_not == nil
+    trait.errors[:sub_traits].should_not == nil
+    subtrait.errors[:count].should_not == nil
     
     model.primary_trait.name = "p1"
     trait.name = "n1"
     subtrait.count = 1
     model.valid?.should == true
-    model.errors.on(:primary_trait).should == nil
-    model.errors.on(:traits).should == nil
-    model.primary_trait.errors.on(:name).should == nil
-    trait.errors.on(:name).should == nil
-    trait.errors.on(:sub_traits).should == nil
-    subtrait.errors.on(:count).should == nil
+    model.errors[:primary_trait].should == nil
+    model.errors[:traits].should == nil
+    model.primary_trait.errors[:name].should == nil
+    trait.errors[:name].should == nil
+    trait.errors[:sub_traits].should == nil
+    subtrait.errors[:count].should == nil
   end
   
 end
