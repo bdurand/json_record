@@ -89,6 +89,8 @@ describe JsonRecord::Serialized do
   it "should convert a hash to an embedded document" do
     model = JsonRecord::Test::Model.new
     model.primary_trait = {:name => "thing", :value => "stuff"}
+    model.primary_trait.name.should == "thing"
+    model.primary_trait.value.should == "stuff"
     model.primary_trait.attributes.should == {"name" => "thing", "value" => "stuff"}
   end
   
@@ -145,13 +147,26 @@ describe JsonRecord::Serialized do
       "field_5"=>nil,
       "traits"=>[],
       "value"=>0,
-      "strings"=>nil,
-      "map"=>nil,
+      "strings"=>[],
+      "map"=>{},
       "verified"=>nil,
       "when"=>nil,
       "primary_trait"=>nil
     }
     JsonRecord::Test::Model.new.attributes["traits"].should be_a(JsonRecord::EmbeddedDocumentArray)
+  end
+  
+  it "should make default values automatically for arrays and hashes" do
+    model_1 = JsonRecord::Test::Model.new
+    model_1.strings << "val"
+    model_1.strings.should == ["val"]
+    model_1.map["val"] = 1
+    model_1.map.should == {"val" => 1}
+    model_2 = JsonRecord::Test::Model.new
+    model_2.strings << "val2"
+    model_2.strings.should == ["val2"]
+    model_2.map["val2"] = 2
+    model_2.map.should == {"val2" => 2}
   end
   
   it "should allow mass assignment of json attributes" do
@@ -169,16 +184,26 @@ describe JsonRecord::Serialized do
   
   it "should reserialize json attributes into a JSON field" do
     model = JsonRecord::Test::Model.new(:name => "test name", :value => 1)
-    model.save
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
     ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 1}
+    model.value = 2
+    model.save!
+    model = JsonRecord::Test::Model.find(model.id)
+    ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 2}
   end
   
   it "should keep undefined keys found in the JSON field" do
-    model = JsonRecord::Test::Model.new(:json => '{"name": "test name", "value": 1, "unknown": "my value", "other stuff": {"value": 2}}')
+    model = JsonRecord::Test::Model.new(:json => '{"name": "test name", "value": 1, "unknown": "my value", "other stuff": {"value": 2}, "primary_trait": {"name": "n1", "stuff": true}}')
     model.save!
-    ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 1, "unknown" => "my value", "other stuff" => {"value" => 2}}
+    model.value = 2
+    model.primary_trait.value = "beans"
+    ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 1, "unknown" => "my value", "other stuff" => {"value" => 2}, "primary_trait" => {"name" => "n1", "stuff" => true, "sub_traits" => []}}
     model = JsonRecord::Test::Model.find(model.id)
-    ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 1, "unknown" => "my value", "other stuff" => {"value" => 2}}
+    ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 1, "unknown" => "my value", "other stuff" => {"value" => 2}, "primary_trait" => {"name" => "n1", "stuff" => true, "sub_traits" => []}}
+    model.attributes.should_not include("other stuff")
+    model.should_not respond_to(:other_stuff)
+    model.primary_trait.attributes.should_not include("stuff")
   end
   
   it "should allow multiple JSON fields" do

@@ -1,5 +1,11 @@
 require 'active_record'
 
+begin
+  require 'json'
+rescue LoadError
+  ActiveRecord::Base.logger.warn("*** You really should install the json gem for optimal performance with json_record ***")
+end
+
 unless defined?(Boolean)
   class Boolean
   end

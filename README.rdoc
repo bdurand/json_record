@@ -1,1 +1,88 @@
 = JSON Record
+
+The purpose of this code is to add the ability to represent complex documents in ActiveRecord by using JSON to serialize the documents to a database field. This can be especially useful if you need a flexible schema, but don't want or have the means to utilize one of the new schemaless data stores that all the cool kids are talking about.
+
+After all, relational databases are pretty rock solid and widely available technology. If you can't get the cool new thing installed, or if you just feel safe sticking with what you know, this gem may work for you. As an added advantage, it is just an extension on top of ActiveRecord, so you can still use all the features of ActiveRecord and add the schemaless functionality only to models where it makes sense.
+
+== Serialized Fields
+
+To define a complex document field, simply add this code to your ActiveRecord model definition:
+
+serialize_to_json(:json_data) do |schema|
+  schema.key :name
+  schema.key :value, Integer
+end
+
+This will define for you accessors on your model for name and value and serialize those value in a database columns named json_data. These attributes will work just like other ActiveRecord attributes, so you will be able to track changes to them, include them in mass assignments, etc. Of course, that's not all that interesting since you could easily enough have added columns for name and value.
+
+== Embedded Documents
+
+To make you flexible schema really powerful, add some embedded documents to it. Embedded documents are Ruby classes that inherit from JsonRecord::EmbeddedDocument. They work very much like traditional ActiveRecord objects, except that instead of being serialized in a separate table, they are embedded right in the JSON field of their parent record. They can be used to replace has_many and has_one associations and can be far easier to work with.
+
+Embedded documents have their own schema that is serialized to JSON. This schema can also contain embedded documents allowing you to easily create very rich data structures all with only one database table. And because there is only one table, you don't need to worry at all about ensuring your changes to embedded documents are saved along with the parent record.
+
+== Example
+
+  class Post < ActiveRecord::Base
+    serialize_to_json(:json_data) do |schema|
+      schema.key :title, :required => true
+      schema.key :body, :required => true
+      schema.key :author, Person, :required => true
+      schema.many :comments, Comment
+    end
+  end
+
+  class Person < JsonRecord::EmbeddedDocument
+    schema.key :first_name, :required => true
+    schema.key :last_name
+  end
+
+  class Comment < JsonRecord::EmbeddedDocument
+    schema.key :author, Person, :required => true
+    schema.key :body, :required => true
+    schema.many :replies, Comment
+  end
+
+Create a new post with a title and author:
+
+post = Post.create!(:title => "What I think",
+                    :body => "Stuff is good",
+                    :author => {:first_name => "John", :last_name => "Doe"})
+
+Change the authors first name:
+
+  post.author.first_name = "Bill"
+
+Add a couple of comments:
+
+  post.comments.build(:author => {:first_name => "Tony"}, :body => "I like it")
+  post.comments.build(:author => {:first_name => "Jack"}, :body => "I don't like it")
+
+Add a reply:
+
+  post.comments.first.replies.build(:author => {:first_name => "Ralph"}, :body => "You're and idiot")
+
+And save it all:
+
+  post.save
+
+Unlike with traditional association, you don't need any after_save callbacks to ensure that the associations are saved. If we want to remove the last comment, all we need to do is:
+
+  post.comments.pop
+  post.save
+
+== Limitations
+
+One thing you cannot do is index the fields in the serialized JSON. If you need to be able to search on those fields, you'll need a separate search engine (i.e. Solr or Sphinx). Or, you could just move it out of the JSON fields and make it a regular database column with an index on it. The interface will be exactly the same.
+
+In order to conserve space and increase performance, blank values are not serialized to JSON. One side effect is that you cannot have fields with the empty string as the value. Also, if you look at the JSON stored in the database, you won't be able to deduce the schema since blank fields will be missing entirely. If you have any fields that are used to store Arrays or Hashes will never be nil and will always be initialized with an empty Array or Hash.
+
+== Details, details, details
+
+For optimal performance when working with JSON, you should really have the +json+ gem installed. This gem does not have a direct dependency on +json+ since it will work just fine without it, but if it is missing, you'll get a warning about it in the ActiveRecord log.
+
+For performance, attributes from a JSON serialized field are only loaded when they are accessed. When a record is saved, the JSON attributes are translated back to JSON and stored in the serialized field. If a field is encountered in the JSON that has not been declared in the schema, it will persist, but will not be accessible via an accessor.
+
+The fields you are using to store JSON must be large enough to handle any document. You should provide a :length attribute in your migration to ensure that text fields are long enough. By default, MySQL, for instance, will create a TEXT field limited to 32K. What you really want is a MEDIUMTEXT or LONGTEXT field.
+
+Since JSON can be kind of wordy and take up a lot more space than a traditional column based approach, you can also specify that the JSON should be compressed when it is stored in the database. To do this, simply create the JSON column as a binary column type instead of a text column. This is the recommended set up unless you need to browse through your database outside of your Ruby application.
