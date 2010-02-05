@@ -1,41 +1,9 @@
 module JsonRecord
-  # OK, this is ugly, but necessary to get ActiveRecord::Errors to be compatible with
-  # EmbeddedDocument. This will all be fixed with Rails 3 and ActiveModel. Until then
-  # we'll just live with this.
-  module ActiveRecordStub #:nodoc:
-    def self.included (base)
-      base.extend(ClassMethods)
-    end
-    
-    module ClassMethods
-      def human_name (options = {})
-        name.split('::').last.humanize
-      end
-      
-      def human_attribute_name (attribute, options = {})
-        attribute.to_s.humanize
-      end
-      
-      def self_and_descendants_from_active_record
-        [self]
-      end
-    end
-    
-    private
-    def save (*args); end;
-    def save! (*args); end;
-    def destroy (*args); end;
-    def create (*args); end;
-    def update (*args); end;
-    def new_record?; false; end;
-  end
-  
   # Subclasses of EmbeddedDocument can be used as the type for keys or many field definitions
   # in Schema. Embedded documents are then extensions of the schema. In this way, complex
   # documents represented in JSON can be deserialized as complex objects.
   class EmbeddedDocument
-    include ActiveRecordStub
-    include ActiveRecord::Validations
+    include ActiveModel::Validations
     include AttributeMethods
     
     class_inheritable_reader :schema
