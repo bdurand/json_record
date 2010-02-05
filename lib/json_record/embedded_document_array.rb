@@ -6,6 +6,8 @@ module JsonRecord
     def initialize (klass, parent, objects = [])
       @klass = klass
       @parent = parent
+      objects = [] unless objects
+      objects = [objects] unless objects.is_a?(Array)
       objects = objects.collect do |obj|
         obj = @klass.new(obj) if obj.is_a?(Hash)
         if obj.is_a?(@klass)

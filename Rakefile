@@ -9,7 +9,7 @@ task :default => :test
 
 desc 'Test json_record.'
 Spec::Rake::SpecTask.new(:test) do |t|
-  t.spec_files = 'spec/**/*_spec.rb'
+  t.spec_files = FileList.new('spec/**/*_spec.rb')
 end
 
 desc 'Generate documentation for json_record.'
