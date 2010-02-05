@@ -25,6 +25,9 @@ module JsonRecord
       end
     end
     
+    def deprecated_callback_method (*args)
+    end
+    
     private
     def save (*args); end;
     def save! (*args); end;
