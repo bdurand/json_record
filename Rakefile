@@ -29,6 +29,7 @@ Jeweler::Tasks.new do |gem|
   
   gem.add_dependency('activerecord', '>= 2.2.2', '< 3.0')
   gem.add_development_dependency('rspec', '>= 1.2.9')
+  gem.add_development_dependency('jeweler')
 end
 
 Jeweler::GemcutterTasks.new
