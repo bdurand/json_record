@@ -21,14 +21,15 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
 end
 
 Jeweler::Tasks.new do |gem|
-  gem.name        = "json_record"
-  gem.summary     = %Q{ActiveRecord support for mapping complex documents within a single RDBMS record via JSON serialization.}
-  gem.email       = "brian@embellishedvisions.com"
-  gem.homepage    = "http://github.com/bdurand/json_record"
-  gem.authors     = ["Brian Durand"]
+  gem.name = "json_record"
+  gem.summary = %Q{ActiveRecord support for mapping complex documents within a single RDBMS record via JSON serialization.}
+  gem.email = "brian@embellishedvisions.com"
+  gem.homepage = "http://github.com/bdurand/json_record"
+  gem.authors = ["Brian Durand"]
   
   gem.add_dependency('activerecord', '>= 3.0.0')
   gem.add_development_dependency('rspec', '>= 1.2.9')
+  gem.add_development_dependency('jeweler')
 end
 
 Jeweler::GemcutterTasks.new
