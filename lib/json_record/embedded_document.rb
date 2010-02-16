@@ -45,20 +45,19 @@ module JsonRecord
     include ActiveRecord::Validations
     include AttributeMethods
     
+    write_inheritable_attribute(:schema, Schema.new(self, nil))
     class_inheritable_reader :schema
     
     class << self
       # Define a field for the schema. This is a shortcut for calling schema.key.
       # See Schema#key for details. 
       def key (name, *args)
-        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
         schema.key(name, *args)
       end
       
       # Define a multivalued field for the schema. This is a shortcut for calling schema.many.
       # See Schema#many for details. 
       def many (name, *args)
-        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
         schema.many(name, *args)
       end
     end
@@ -115,6 +114,10 @@ module JsonRecord
     
     def hash
       attributes.hash + parent.hash
+    end
+    
+    def inspect
+      "#<#{self.class.name} #{attributes.inspect}>"
     end
     
     protected
