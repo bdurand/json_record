@@ -2,18 +2,21 @@ module JsonRecord
   # Adds the serialized JSON behavior to ActiveRecord.
   module Serialized
     def self.included (base)
-      base.class_inheritable_accessor :json_serialized_fields
-      base.extend(ClassMethods)
+      base.extend(ActsMethods)
     end
     
-    module ClassMethods
+    module ActsMethods
       # Specify a field name that contains serialized JSON. The block will be yielded to with a
       # Schema object that can then be used to define the fields in the JSON document. A class
       # can have multiple fields that store JSON documents if necessary.
       def serialize_to_json (field_name, &block)
+        unless include?(InstanceMethods)
+          class_inheritable_accessor :json_serialized_fields
+          extend ClassMethods
+          include InstanceMethods
+        end
         field_name = field_name.to_s
         self.json_serialized_fields ||= {}
-        include InstanceMethods unless include?(InstanceMethods)
         schema = Schema.new(self, field_name)
         field_schemas = json_serialized_fields[field_name]
         if field_schemas
@@ -25,7 +28,9 @@ module JsonRecord
         field_schemas << schema
         block.call(schema) if block
       end
-      
+    end
+    
+    module ClassMethods
       # Get the field definition of the JSON field from the schema it is defined in.
       def json_field_definition (name)
         field = nil

@@ -18,3 +18,5 @@ require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embed
 require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'field_definition'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'json_field'))
 require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'serialized'))
+
+ActiveRecord::Base.send(:include, JsonRecord::Serialized)
