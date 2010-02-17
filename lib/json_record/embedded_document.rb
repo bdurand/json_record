@@ -37,29 +37,19 @@ module JsonRecord
     def new_record?; false; end;
   end
   
-  # Subclasses of EmbeddedDocument can be used as the type for keys or many field definitions
+  # Classes that include EmbeddedDocument can be used as the type for keys or many field definitions
   # in Schema. Embedded documents are then extensions of the schema. In this way, complex
   # documents represented in JSON can be deserialized as complex objects.
-  class EmbeddedDocument
-    include ActiveRecordStub
-    include ActiveRecord::Validations
-    include AttributeMethods
+  #
+  # To define the schema for an embedded document, call schema.key or schema.many from the class definition.
+  module EmbeddedDocument
+    def self.included (base)
+      base.send :include, ActiveRecordStub
+      base.send :include, ActiveRecord::Validations
+      base.send :include, AttributeMethods
     
-    write_inheritable_attribute(:schema, Schema.new(self, nil))
-    class_inheritable_reader :schema
-    
-    class << self
-      # Define a field for the schema. This is a shortcut for calling schema.key.
-      # See Schema#key for details. 
-      def key (name, *args)
-        schema.key(name, *args)
-      end
-      
-      # Define a multivalued field for the schema. This is a shortcut for calling schema.many.
-      # See Schema#many for details. 
-      def many (name, *args)
-        schema.many(name, *args)
-      end
+      base.write_inheritable_attribute(:schema, Schema.new(base, nil))
+      base.class_inheritable_reader :schema
     end
     
     # The parent object of the document.

@@ -17,7 +17,7 @@ This will define for you accessors on your model for name and value and serializ
 
 == Embedded Documents
 
-To make you flexible schema really powerful, add some embedded documents to it. Embedded documents are Ruby classes that inherit from JsonRecord::EmbeddedDocument. They work very much like traditional ActiveRecord objects, except that instead of being serialized in a separate table, they are embedded right in the JSON field of their parent record. They can be used to replace has_many and has_one associations and can be far easier to work with.
+To make you flexible schema really powerful, add some embedded documents to it. Embedded documents are Ruby classes that include JsonRecord::EmbeddedDocument. They work very much like traditional ActiveRecord objects, except that instead of being serialized in a separate table, they are embedded right in the JSON field of their parent record. They can be used to replace has_many and has_one associations and can be far easier to work with.
 
 Embedded documents have their own schema that is serialized to JSON. This schema can also contain embedded documents allowing you to easily create very rich data structures all with only one database table. And because there is only one table, you don't need to worry at all about ensuring your changes to embedded documents are saved along with the parent record.
 
@@ -32,12 +32,14 @@ Embedded documents have their own schema that is serialized to JSON. This schema
     end
   end
 
-  class Person < JsonRecord::EmbeddedDocument
+  class Person
+    include JsonRecord::EmbeddedDocument
     schema.key :first_name, :required => true
     schema.key :last_name
   end
 
-  class Comment < JsonRecord::EmbeddedDocument
+  class Comment
+    include JsonRecord::EmbeddedDocument
     schema.key :author, Person, :required => true
     schema.key :body, :required => true
     schema.many :replies, Comment

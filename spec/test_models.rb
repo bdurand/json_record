@@ -27,15 +27,21 @@ module JsonRecord
       Dir.delete(db_dir) if File.exist?(db_dir) and Dir.entries(db_dir).reject{|f| f.match(/^\.+$/)}.empty?
     end
 
-    class Trait < JsonRecord::EmbeddedDocument
-      key :name, :required => true
-      key :value
-      key :count, Integer
-      many :sub_traits, Trait, :unique => [:name, :value]
+    class Trait
+      include JsonRecord::EmbeddedDocument
+      schema.key :name, :required => true
+      schema.key :value
+      schema.key :count, Integer
+      schema.many :sub_traits, Trait, :unique => [:name, :value]
+    end
+    
+    class Dimension
+      include JsonRecord::EmbeddedDocument
+      schema.key :height, Integer, :required => true
+      schema.key :width, Integer, :required => true
     end
     
     class Model < ActiveRecord::Base
-      include JsonRecord::Serialized
       serialize_to_json(:json) do |schema|
         schema.key :name, String, :required => true, :length => 15
         schema.key :value, Integer, :default => 0
@@ -48,6 +54,7 @@ module JsonRecord
         schema.key :map, Hash
         schema.key :primary_trait, Trait
         schema.many :traits, Trait, :unique => :name
+        schema.key :dimension, Dimension
       end
 
       serialize_to_json(:compressed_json) do |schema|

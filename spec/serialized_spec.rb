@@ -151,7 +151,8 @@ describe JsonRecord::Serialized do
       "map"=>{},
       "verified"=>nil,
       "when"=>nil,
-      "primary_trait"=>nil
+      "primary_trait"=>nil,
+      "dimension"=>nil
     }
     JsonRecord::Test::Model.new.attributes["traits"].should be_a(JsonRecord::EmbeddedDocumentArray)
   end
