@@ -33,6 +33,10 @@ module JsonRecord
       schema.key :value
       schema.key :count, Integer
       schema.many :sub_traits, Trait, :unique => [:name, :value]
+      
+      attr_accessor :callbacks
+      before_validation{|record| record.callbacks ||= []; record.callbacks << :before_validation}
+      after_validation{|record| record.callbacks ||= []; record.callbacks << :after_validation}
     end
     
     class Dimension

@@ -428,4 +428,9 @@ describe JsonRecord::Serialized do
     subtrait.errors[:count].should be_blank
   end
   
+  it "should perform validation callbacks on embedded documents" do
+    trait = JsonRecord::Test::Trait.new(:name => "name")
+    trait.valid?.should == true
+    trait.callbacks.should == [:before_validation, :after_validation]
+  end
 end

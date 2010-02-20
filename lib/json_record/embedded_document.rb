@@ -37,6 +37,16 @@ module JsonRecord
     def new_record?; false; end;
   end
   
+  module ActiveSupport3Callbacks #:nodoc:
+    def before_validation (*args, &block)
+      set_callback(:validation, :before, *args, &block)
+    end
+    
+    def after_validation (*args, &block)
+      set_callback(:validation, :after, *args, &block)
+    end
+  end
+  
   # Classes that include EmbeddedDocument can be used as the type for keys or many field definitions
   # in Schema. Embedded documents are then extensions of the schema. In this way, complex
   # documents represented in JSON can be deserialized as complex objects.
@@ -47,7 +57,20 @@ module JsonRecord
       base.send :include, ActiveRecordStub
       base.send :include, ActiveRecord::Validations
       base.send :include, AttributeMethods
-    
+      base.send :include, ActiveSupport::Callbacks
+      
+      if base.respond_to?(:set_callback)
+        # Poor man's check for ActiveSupport 3.0 which completely changed around how callbacks work.
+        # This is a temporary work around so that the same gem can be compatible with both 2.x and 3.x for now.
+        # Incoporating ActiveModel will fix all.
+        base.define_callbacks :validation
+        base.alias_method_chain(:valid?, :callbacks_3)
+        base.extend(ActiveSupport3Callbacks)
+      else
+        base.define_callbacks :before_validation, :after_validation
+        base.alias_method_chain(:valid?, :callbacks)
+      end
+      
       base.write_inheritable_attribute(:schema, Schema.new(base, nil))
       base.class_inheritable_reader :schema
     end
@@ -108,6 +131,19 @@ module JsonRecord
     
     def inspect
       "#<#{self.class.name} #{attributes.inspect}>"
+    end
+    
+    def valid_with_callbacks? #:nodoc:
+      run_callbacks(:before_validation)
+      valid = valid_without_callbacks?
+      run_callbacks(:after_validation)
+      valid
+    end
+    
+    def valid_with_callbacks_3? #:nodoc:
+      run_callbacks(:validation) do
+        valid_without_callbacks_3?
+      end
     end
     
     protected

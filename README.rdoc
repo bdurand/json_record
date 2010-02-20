@@ -21,6 +21,8 @@ To make you flexible schema really powerful, add some embedded documents to it. 
 
 Embedded documents have their own schema that is serialized to JSON. This schema can also contain embedded documents allowing you to easily create very rich data structures all with only one database table. And because there is only one table, you don't need to worry at all about ensuring your changes to embedded documents are saved along with the parent record.
 
+Embedded documents support validations and before_validation and after_validation callbacks.
+
 == Example
 
   class Post < ActiveRecord::Base
@@ -43,6 +45,10 @@ Embedded documents have their own schema that is serialized to JSON. This schema
     schema.key :author, Person, :required => true
     schema.key :body, :required => true
     schema.many :replies, Comment
+    
+    after_validation do |comment|
+      comment.body = ERB::Util.html_escape(comment.body)
+    end
   end
 
 Create a new post with a title and author:
