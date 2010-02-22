@@ -228,10 +228,19 @@ describe JsonRecord::Serialized do
   end
   
   it "should track changes on json attributes" do
-    model = JsonRecord::Test::Model.create!(:name => "test name")
+    model = JsonRecord::Test::Model.new(:name => "test name", :primary_trait => {:name => "n1", :value => "v1"})
+    model.changes.should == {"name" => [nil, "test name"]}
+    model.primary_trait.changes.should == {"name" => [nil, "n1"], "value" => [nil, "v1"]}
+    model.save!
     model.changes.should == {}
+    
+    model.reload
+    model.changes.should == {}
+    model.primary_trait.name.should == "n1"
     model.name = "new name"
     model.value = 1
+    model.primary_trait = {:name => "n2", :value => "v2"}
+    
     model.changes.should == {"name" => ["test name", "new name"], "value" => [0, 1]}
     model.name_changed?.should == true
     model.name_was.should == "test name"

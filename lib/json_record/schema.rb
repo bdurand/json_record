@@ -113,16 +113,18 @@ module JsonRecord
     def define_json_accessor (field, json_field_name)
       @klass.send(:define_method, field.name) {read_json_attribute(json_field_name, field)}
       @klass.send(:define_method, "#{field.name}?") {!!read_json_attribute(json_field_name, field)} if field.type == Boolean
-      @klass.send(:define_method, "#{field.name}=") {|val| write_json_attribute(json_field_name, field, val, true)}
-      @klass.send(:define_method, "#{field.name}_changed?") {self.send(:attribute_changed?, field.name)}
-      @klass.send(:define_method, "#{field.name}_change") {self.send(:attribute_change, field.name)}
-      @klass.send(:define_method, "#{field.name}_was") {self.send(:attribute_was, field.name)}
+      @klass.send(:define_method, "#{field.name}=") {|val| write_json_attribute(json_field_name, field, val)}
       @klass.send(:define_method, "#{field.name}_before_type_cast") {self.read_attribute_before_type_cast(field.name)}
+      unless field.type.include?(EmbeddedDocument)
+        @klass.send(:define_method, "#{field.name}_changed?") {self.send(:attribute_changed?, field.name)}
+        @klass.send(:define_method, "#{field.name}_change") {self.send(:attribute_change, field.name)}
+        @klass.send(:define_method, "#{field.name}_was") {self.send(:attribute_was, field.name)}
+      end
     end
     
     def define_many_json_accessor (field, json_field_name)
       @klass.send(:define_method, field.name) {self.read_json_attribute(json_field_name, field)}
-      @klass.send(:define_method, "#{field.name}=") {|val| self.write_json_attribute(json_field_name, field, val, true)}
+      @klass.send(:define_method, "#{field.name}=") {|val| self.write_json_attribute(json_field_name, field, val)}
     end
   end
 end

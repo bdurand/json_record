@@ -84,7 +84,7 @@ module JsonRecord
       @json_attributes = {}
       attrs.each_pair do |name, value|
         field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
-        write_attribute(field, value, false, self)
+        write_attribute(field, value, self)
       end
     end
     
@@ -156,8 +156,8 @@ module JsonRecord
       read_attribute(field, self)
     end
     
-    def write_json_attribute (json_field_name, field, value, track_changes)
-      write_attribute(field, value, track_changes, self)
+    def write_json_attribute (json_field_name, field, value)
+      write_attribute(field, value, self)
     end
   
     def changed_attributes

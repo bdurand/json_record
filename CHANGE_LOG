@@ -11,3 +11,7 @@
 1.0.3
   - Added before and after validation callbacks on EmbeddedDocument
   - Fixed bug where fields couldn't be set to false
+
+1.0.4
+  - Fixed bug with tracking changes when initializing an EmbeddedDocument.
+  - Removed tracking changes of keys that are EmbeddedDocuments

@@ -22,8 +22,8 @@ module JsonRecord
     end
 
     # Write a field. The field param must be a FieldDefinition and the context should be the record
-    # which is being read from. Track_changes indicates if changes to the object should be tracked.
-    def write_attribute (field, val, track_changes, context)
+    # which is being read from.
+    def write_attribute (field, val, context)
       if field.multivalued?
         val = val.values if val.is_a?(Hash)
         json_attributes[field.name] = EmbeddedDocumentArray.new(field.type, context, val)
@@ -32,7 +32,7 @@ module JsonRecord
         converted_value = field.convert(val)
         converted_value.parent = context if converted_value.is_a?(EmbeddedDocument)
         unless old_value == converted_value
-          if track_changes
+          unless field.type.include?(EmbeddedDocument) or Thread.current[:do_not_track_json_field_changes]
             changes = changed_attributes
             if changes.include?(field.name)
               changes.delete(field.name) if converted_value == changes[field.name]

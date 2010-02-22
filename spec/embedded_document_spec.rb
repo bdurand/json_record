@@ -36,17 +36,20 @@ describe JsonRecord::EmbeddedDocument do
   end
   
   it "should track changes to attributes" do
-    trait = JsonRecord::Test::Trait.new
+    trait = JsonRecord::Test::Trait.new(:value => "val")
+    trait.value_changed?.should == true
+    trait.value_was.should == nil
+    trait.value_change.should == [nil, "val"]
     trait.name = "test"
     trait.name_was.should == nil
     trait.name_changed?.should == true
     trait.name_change.should == [nil, "test"]
-    trait.changes.should == {"name" => [nil, "test"]}
+    trait.changes.should == {"value" => [nil, "val"], "name" => [nil, "test"]}
     trait.name = nil
     trait.name_changed?.should == false
     trait.name_was.should == nil
     trait.name_change.should == nil
-    trait.changes.should == {}
+    trait.changes.should == {"value" => [nil, "val"]}
   end
   
   it "should convert to attributes to json" do

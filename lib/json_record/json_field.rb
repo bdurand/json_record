@@ -33,11 +33,17 @@ module JsonRecord
       unless @record[@name].blank?
         json = @record[@name]
         json = Zlib::Inflate.inflate(json) if @compressed
-        ActiveSupport::JSON.decode(json).each_pair do |attr_name, attr_value|
-          field = nil
-          @schemas.each{|schema| field = schema.fields[attr_name]; break if field}
-          field = FieldDefinition.new(attr_name, :type => attr_value.class) unless field
-          write_attribute(field, attr_value, false, @record)
+        do_not_track_changes = Thread.current[:do_not_track_json_field_changes]
+        Thread.current[:do_not_track_json_field_changes] = true
+        begin
+          ActiveSupport::JSON.decode(json).each_pair do |attr_name, attr_value|
+            field = nil
+            @schemas.each{|schema| field = schema.fields[attr_name]; break if field}
+            field = FieldDefinition.new(attr_name, :type => attr_value.class) unless field
+            write_attribute(field, attr_value, @record)
+          end
+        ensure
+          Thread.current[:do_not_track_json_field_changes] = do_not_track_changes
         end
       end
     end

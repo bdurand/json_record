@@ -93,8 +93,8 @@ module JsonRecord
       end
       
       # Write a field value to a JsonField
-      def write_json_attribute (json_field_name, field, value, track_changes)
-        json_fields[json_field_name].write_attribute(field, value, track_changes, self)
+      def write_json_attribute (json_field_name, field, value)
+        json_fields[json_field_name].write_attribute(field, value, self)
       end
       
       # Serialize the JSON in the record into JsonField objects.
