@@ -61,7 +61,7 @@ module JsonRecord
     
     private
     
-    def add_json_validations (field, options)
+    def add_json_validations (field, options) #:nodoc:
       @klass.validates_presence_of(field.name) if options[:required]
       @klass.validates_format_of(field.name, :with => options[:format], :allow_blank => true) if options[:format]
       
@@ -122,7 +122,7 @@ module JsonRecord
       end
     end
     
-    def define_json_accessor (field, json_field_name)
+    def define_json_accessor (field, json_field_name) #:nodoc:
       @klass.send(:define_method, field.name) {read_json_attribute(json_field_name, field)}
       @klass.send(:define_method, "#{field.name}?") {!!read_json_attribute(json_field_name, field)} if field.type == Boolean
       @klass.send(:define_method, "#{field.name}=") {|val| write_json_attribute(json_field_name, field, val)}
@@ -134,7 +134,7 @@ module JsonRecord
       end
     end
     
-    def define_many_json_accessor (field, json_field_name)
+    def define_many_json_accessor (field, json_field_name) #:nodoc:
       @klass.send(:define_method, field.name) {self.read_json_attribute(json_field_name, field)}
       @klass.send(:define_method, "#{field.name}=") {|val| self.write_json_attribute(json_field_name, field, val)}
     end

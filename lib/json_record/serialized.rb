@@ -60,12 +60,12 @@ module JsonRecord
         @json_fields
       end
       
-      def reload_with_serialized_json (*args)
+      def reload_with_serialized_json (*args) #:nodoc:
         @json_fields = nil
         reload_without_serialized_json(*args)
       end
       
-      def attributes_with_serialized_json
+      def attributes_with_serialized_json #:nodoc:
         attrs = json_attributes.reject{|k,v| !json_field_names.include?(k)}
         attrs.merge!(attributes_without_serialized_json)
         json_serialized_fields.keys.each{|name| attrs.delete(name)}
