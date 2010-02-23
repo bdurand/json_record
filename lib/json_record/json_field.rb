@@ -26,7 +26,7 @@ module JsonRecord
       @attributes = {}
       @schemas.each do |schema|
         schema.fields.values.each do |field|
-          @attributes[field.name] = field.multivalued? ? EmbeddedDocumentArray.new(field.type, self) : field.default
+          @attributes[field.name] = field.multivalued? ? EmbeddedDocumentArray.new(field.type, @record) : field.default
         end
       end
       

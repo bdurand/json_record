@@ -15,3 +15,6 @@
 1.0.4
   - Fixed bug with tracking changes when initializing an EmbeddedDocument.
   - Removed tracking changes of keys that are EmbeddedDocuments
+
+1.0.5
+  - Fixed bug with initializing new EmbeddedDocumentArray with the proper parent when there is no data to deserialize.
