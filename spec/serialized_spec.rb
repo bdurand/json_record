@@ -9,11 +9,19 @@ describe JsonRecord::Serialized do
     JsonRecord::Test.drop_tables
   end
   
-  it "should have accessors for json attributes" do
+  it "should have accessors for json attributes and not interfere with column attribute accessors" do
     model = JsonRecord::Test::Model.new
     model.name.should == nil
     model.name = "test"
     model.name.should == "test"
+    model[:name].should == "test"
+    model['name'].should == "test"
+    model[:name] = "new value"
+    model.name.should == "new value"
+    model.string_field = "a"
+    model.string_field.should == "a"
+    model[:string_field] = "b"
+    model[:string_field].should == "b"
   end
   
   it "should convert blank values to nil" do
@@ -145,6 +153,7 @@ describe JsonRecord::Serialized do
       "field_3"=>nil,
       "field_4"=>nil,
       "field_5"=>nil,
+      "unit_price"=>nil,
       "traits"=>[],
       "value"=>0,
       "strings"=>[],
@@ -393,9 +402,17 @@ describe JsonRecord::Serialized do
   end
   
   it "should get the json field definition for a field" do
-    JsonRecord::Test::Model.json_field_definition(:value).name.should == "value"
-    JsonRecord::Test::Model.json_field_definition("value").name.should == "value"
-    JsonRecord::Test::Model.json_field_definition("nothing").should == nil
+    json_field, field = JsonRecord::Test::Model.json_field_definition(:value)
+    json_field.should == "json"
+    field.name.should == "value"
+    
+    json_field, field = JsonRecord::Test::Model.json_field_definition("field_1")
+    json_field.should == "compressed_json"
+    field.name.should == "field_1"
+    
+    json_field, field = JsonRecord::Test::Model.json_field_definition("nothing")
+    json_field.should == nil
+    field.should == nil
   end
   
   it "should validate uniqueness of embedded documents" do
@@ -441,5 +458,12 @@ describe JsonRecord::Serialized do
     trait = JsonRecord::Test::Trait.new(:name => "name")
     trait.valid?.should == true
     trait.callbacks.should == [:before_validation, :after_validation]
+  end
+  
+  it "should allow overriding the attribute reader and writers" do
+    model = JsonRecord::Test::Model.new(:unit_price => :infinity)
+    model.unit_price.should == 1000000000
+    model.unit_price = 1.2253
+    model.unit_price.should == 1.23
   end
 end

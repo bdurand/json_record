@@ -31,14 +31,18 @@ module JsonRecord
     end
     
     module ClassMethods
-      # Get the field definition of the JSON field from the schema it is defined in.
+      # Get the json field and the field definition of the JSON field from the schema it is defined in.
       def json_field_definition (name)
-        field = nil
         if json_serialized_fields
           name = name.to_s
-          json_serialized_fields.values.flatten.each{|schema| field = schema.fields[name]; break if field}
+          json_serialized_fields.each_pair do |fname, schemas|
+            schemas.each do |schema|
+              field = schema.fields[name];
+              return [fname, field] if field
+            end
+          end
         end
-        return field
+        return nil
       end
     end
     
@@ -47,6 +51,8 @@ module JsonRecord
         base.before_save :serialize_json_attributes
         base.alias_method_chain :reload, :serialized_json
         base.alias_method_chain :attributes, :serialized_json
+        base.alias_method_chain :read_attribute, :serialized_json
+        base.alias_method_chain :write_attribute, :serialized_json
       end
       
       # Get the JsonField objects for the record.
@@ -72,6 +78,26 @@ module JsonRecord
         return attrs
       end
       
+      def read_attribute_with_serialized_json (name)
+        name = name.to_s
+        json_field, field_definition = self.class.json_field_definition(name)
+        if field_definition
+          read_json_attribute(json_field, field_definition)
+        else
+          read_attribute_without_serialized_json(name)
+        end
+      end
+      
+      def write_attribute_with_serialized_json (name, value)
+        name = name.to_s
+        json_field, field_definition = self.class.json_field_definition(name)
+        if field_definition
+          write_json_attribute(json_field, field_definition, value)
+        else
+          write_attribute_without_serialized_json(name, value)
+        end
+      end
+      
       protected
       
       # Returns a hash of all the JsonField objects merged together.
@@ -87,12 +113,12 @@ module JsonRecord
         @json_field_names = json_serialized_fields.values.flatten.collect{|s| s.fields.keys}.flatten
       end
       
-      # Read a field value from a JsonField
+      # Read a field value from a JsonField.
       def read_json_attribute (json_field_name, field)
         json_fields[json_field_name].read_attribute(field, self)
       end
       
-      # Write a field value to a JsonField
+      # Write a field value to a JsonField.
       def write_json_attribute (json_field_name, field, value)
         json_fields[json_field_name].write_attribute(field, value, self)
       end

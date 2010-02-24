@@ -18,3 +18,7 @@
 
 1.0.5
   - Fixed bug with initializing new EmbeddedDocumentArray with the proper parent when there is no data to deserialize.
+
+1.0.6
+  - Allow EmbeddedDocument.new to call all accessors and not just those defined in the JSON schema.
+  - Allow getting and setting json attributes with [] and []=

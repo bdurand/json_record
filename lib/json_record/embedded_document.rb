@@ -84,7 +84,12 @@ module JsonRecord
       @json_attributes = {}
       attrs.each_pair do |name, value|
         field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
-        write_attribute(field, value, self)
+        writer = "#{name}=".to_sym
+        if respond_to?(writer)
+          send(writer, value)
+        else
+          write_attribute(field, value, self)
+        end
       end
     end
     
@@ -111,6 +116,18 @@ module JsonRecord
     # Get a list of changes to the document.
     def changes
       changed.inject({}) {|h, attr| h[attr] = attribute_change(attr); h}
+    end
+    
+    # Get a field from the schema with the specified name.
+    def [] (name)
+      field = schema.fields[name.to_s]
+      read_attribute(field, self) if field
+    end
+    
+    # Set a field from the schema with the specified name.
+    def []= (name, value)
+      field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
+      write_attribute(field, value, self)
     end
     
     def to_json (*args)

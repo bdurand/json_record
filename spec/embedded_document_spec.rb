@@ -65,4 +65,22 @@ describe JsonRecord::EmbeddedDocument do
     (trait_1.hash == trait_2.hash).should == true
   end
   
+  it "should read json attributes with []" do
+    dimension = JsonRecord::Test::Dimension.new(:width => 100)
+    dimension[:width].should == 100
+  end
+  
+  it "should be able to write json attributes with []=" do
+    dimension = JsonRecord::Test::Dimension.new
+    dimension[:width] = 100
+    dimension.width.should == 100
+  end
+  
+  it "should set all accessors on initialize" do
+    dimension = JsonRecord::Test::Dimension.new(:width => 100, :height => :infinity, :unit => "meters")
+    dimension.width.should == 100
+    dimension.height.should == 1000000000
+    dimension.unit.should == "meters"
+  end
+  
 end

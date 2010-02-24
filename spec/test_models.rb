@@ -43,6 +43,15 @@ module JsonRecord
       include JsonRecord::EmbeddedDocument
       schema.key :height, Integer, :required => true
       schema.key :width, Integer, :required => true
+      attr_accessor :unit
+      
+      def height= (value)
+        if value == :infinity
+          self[:height] = 1000000000
+        else
+          self[:height] = value
+        end
+      end
     end
     
     class Model < ActiveRecord::Base
@@ -67,6 +76,17 @@ module JsonRecord
         schema.key :field_3, :in => ("A".."M")
         schema.key :field_4, :length => (4..15)
         schema.key :field_5, :length => {:minimum => 5}
+        schema.key :unit_price, Float
+      end
+      
+      def unit_price
+        p = self[:price]
+        p.is_a?(Numeric) ? (p * 100).round / 100.0 : p
+      end
+      
+      def unit_price= (value)
+        value = 1000000000 if value == :infinity
+        self[:price] = value
       end
     end
     
