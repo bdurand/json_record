@@ -37,10 +37,15 @@ module JsonRecord
         Thread.current[:do_not_track_json_field_changes] = true
         begin
           ActiveSupport::JSON.decode(json).each_pair do |attr_name, attr_value|
-            field = nil
-            @schemas.each{|schema| field = schema.fields[attr_name]; break if field}
-            field = FieldDefinition.new(attr_name, :type => attr_value.class) unless field
-            write_attribute(field, attr_value, @record)
+            setter = "#{attr_name}=".to_sym
+            if @record.respond_to?(setter)
+              @record.send(setter, attr_value)
+            else
+              field = nil
+              @schemas.each{|schema| field = schema.fields[attr_name]; break if field}
+              field = FieldDefinition.new(attr_name, :type => attr_value.class) unless field
+              write_attribute(field, attr_value, @record)
+            end
           end
         ensure
           Thread.current[:do_not_track_json_field_changes] = do_not_track_changes
