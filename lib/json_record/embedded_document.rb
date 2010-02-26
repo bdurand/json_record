@@ -82,20 +82,25 @@ module JsonRecord
     def initialize (attrs = {})
       @attributes = {}
       @json_attributes = {}
-      attrs.each_pair do |name, value|
-        field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
-        writer = "#{name}=".to_sym
-        if respond_to?(writer)
-          send(writer, value)
-        else
-          write_attribute(field, value, self)
-        end
-      end
+      self.attributes = attrs
     end
     
     # Get the attributes of the document.
     def attributes
       @json_attributes.reject{|k,v| !schema.fields.include?(k)}
+    end
+    
+    # Set all the attributes at once.
+    def attributes= (attrs)
+      attrs.each_pair do |name, value|
+        field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
+        setter = "#{name}=".to_sym
+        if respond_to?(setter)
+          send(setter, value)
+        else
+          write_attribute(field, value, self)
+        end
+      end
     end
     
     # Get the attribute values of the document before they were type cast.
