@@ -22,3 +22,7 @@
 1.0.6
   - Allow EmbeddedDocument.new to call all accessors and not just those defined in the JSON schema.
   - Allow getting and setting json attributes with [] and []=
+
+1.0.7
+  - Added attributes= to EmbeddedDocument for mass attribute assignment
+  - Changed deserialized Json values to go through setter methods instead of being directly set
