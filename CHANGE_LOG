@@ -26,3 +26,6 @@
 1.0.7
   - Added attributes= to EmbeddedDocument for mass attribute assignment
   - Changed deserialized Json values to go through setter methods instead of being directly set
+
+1.0.8
+  - Fix Rakefile so it loads even without rspec

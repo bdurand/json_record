@@ -12,7 +12,7 @@ begin
     t.spec_files = FileList.new('spec/**/*_spec.rb')
   end
 rescue LoadError
-  tast :test do
+  task :test do
     STDERR.puts "You must have rspec >= 1.2.9 to run the tests"
   end
 end
@@ -33,6 +33,9 @@ begin
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/json_record"
     gem.authors = ["Brian Durand"]
+    gem.files = FileList["lib/**/*", "spec/**/*", "README.rdoc", "Rakefile"].to_a
+    gem.has_rdoc = true
+    gem.extra_rdoc_files = ["README.rdoc"]
   
     gem.add_dependency('activerecord', '>= 2.2.2')
     gem.add_development_dependency('rspec', '>= 1.2.9')
