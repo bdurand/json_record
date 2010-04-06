@@ -5,17 +5,18 @@
 
 Gem::Specification.new do |s|
   s.name = %q{json_record}
-  s.version = "1.1.0"
+  s.version = "1.1.0.b1"
 
-  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
+  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-02-07}
+  s.date = %q{2010-04-06}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
   s.files = [
-    "MIT_LICENSE",
+    "CHANGE_LOG",
+     "MIT_LICENSE",
      "README.rdoc",
      "Rakefile",
      "VERSION",
@@ -39,8 +40,8 @@ Gem::Specification.new do |s|
   s.homepage = %q{http://github.com/bdurand/json_record}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
-  s.rubygems_version = %q{1.3.5}
-  s.summary = %q{ActiveRecord support for mapping complex documents within a single RDBMS record via JSON serialization.}
+  s.rubygems_version = %q{1.3.6}
+  s.summary = %q{ActiveRecord support for mapping complex documents in a single RDBMS row via JSON serialization.}
   s.test_files = [
     "spec/embedded_document_array_spec.rb",
      "spec/embedded_document_spec.rb",
@@ -56,16 +57,16 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_runtime_dependency(%q<activerecord>, [">= 3.0.0"])
-      s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
+      s.add_development_dependency(%q<rspec>, [">= 1.3.0"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
     else
       s.add_dependency(%q<activerecord>, [">= 3.0.0"])
-      s.add_dependency(%q<rspec>, [">= 1.2.9"])
+      s.add_dependency(%q<rspec>, [">= 1.3.0"])
       s.add_dependency(%q<jeweler>, [">= 0"])
     end
   else
     s.add_dependency(%q<activerecord>, [">= 3.0.0"])
-    s.add_dependency(%q<rspec>, [">= 1.2.9"])
+    s.add_dependency(%q<rspec>, [">= 1.3.0"])
     s.add_dependency(%q<jeweler>, [">= 0"])
   end
 end

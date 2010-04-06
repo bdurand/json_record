@@ -1,26 +1,32 @@
 module JsonRecord
-  # Subclasses of EmbeddedDocument can be used as the type for keys or many field definitions
+  # Classes that include EmbeddedDocument can be used as the type for keys or many field definitions
   # in Schema. Embedded documents are then extensions of the schema. In this way, complex
   # documents represented in JSON can be deserialized as complex objects.
-  class EmbeddedDocument
-    include ActiveModel::Validations
-    include AttributeMethods
-    
-    class_inheritable_reader :schema
-    
-    class << self
-      # Define a field for the schema. This is a shortcut for calling schema.key.
-      # See Schema#key for details. 
-      def key (name, *args)
-        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
-        schema.key(name, *args)
-      end
+  #
+  # To define the schema for an embedded document, call schema.key or schema.many from the class definition.
+  module EmbeddedDocument
+    def self.included (base)
+      base.send :include, ActiveModel::AttributeMethods
+      base.send :include, ActiveModel::Dirty
+      base.send :include, ActiveModel::Validations
+      base.send :include, AttributeMethods
+      base.send :include, ActiveSupport::Callbacks
       
-      # Define a multivalued field for the schema. This is a shortcut for calling schema.many.
-      # See Schema#many for details. 
-      def many (name, *args)
-        write_inheritable_attribute(:schema, Schema.new(self, nil)) unless schema
-        schema.many(name, *args)
+      base.define_callbacks :validation
+      base.alias_method_chain(:valid?, :callbacks)
+      base.extend ValidationCallbacks
+      
+      base.write_inheritable_attribute(:schema, Schema.new(base, nil))
+      base.class_inheritable_reader :schema
+    end
+    
+    module ValidationCallbacks #:nodoc:
+      def before_validation (*args, &block)
+        set_callback(:validation, :before, *args, &block)
+      end
+
+      def after_validation (*args, &block)
+        set_callback(:validation, :after, *args, &block)
       end
     end
     
@@ -31,10 +37,7 @@ module JsonRecord
     def initialize (attrs = {})
       @attributes = {}
       @json_attributes = {}
-      attrs.each_pair do |name, value|
-        field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
-        write_attribute(field, value, false, self)
-      end
+      self.attributes = attrs
     end
     
     # Get the attributes of the document.
@@ -42,24 +45,49 @@ module JsonRecord
       @json_attributes.reject{|k,v| !schema.fields.include?(k)}
     end
     
+    # Set all the attributes at once.
+    def attributes= (attrs)
+      attrs.each_pair do |name, value|
+        field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
+        setter = "#{name}=".to_sym
+        if respond_to?(setter)
+          send(setter, value)
+        else
+          write_attribute(field, value, self)
+        end
+      end
+    end
+    
     # Get the attribute values of the document before they were type cast.
     def attributes_before_type_cast
       @attributes
     end
+    # 
+    # # Determine if the document has been changed.
+    # def changed?
+    #   !changed_attributes.empty?
+    # end
+    # 
+    # # Get the list of attributes changed.
+    # def changed
+    #   changed_attributes.keys
+    # end
+    # 
+    # # Get a list of changes to the document.
+    # def changes
+    #   changed.inject({}) {|h, attr| h[attr] = attribute_change(attr); h}
+    # end
     
-    # Determine if the document has been changed.
-    def changed?
-      !changed_attributes.empty?
+    # Get a field from the schema with the specified name.
+    def [] (name)
+      field = schema.fields[name.to_s]
+      read_attribute(field, self) if field
     end
-
-    # Get the list of attributes changed.
-    def changed
-      changed_attributes.keys
-    end
-
-    # Get a list of changes to the document.
-    def changes
-      changed.inject({}) {|h, attr| h[attr] = attribute_change(attr); h}
+    
+    # Set a field from the schema with the specified name.
+    def []= (name, value)
+      field = schema.fields[name.to_s] || FieldDefinition.new(name, :type => value.class)
+      write_attribute(field, value, self)
     end
     
     def to_json (*args)
@@ -78,6 +106,16 @@ module JsonRecord
       attributes.hash + parent.hash
     end
     
+    def inspect
+      "#<#{self.class.name} #{attributes.inspect}>"
+    end
+    
+    def valid_with_callbacks? #:nodoc:
+      run_callbacks(:validation) do
+        valid_without_callbacks?
+      end
+    end
+    
     protected
     
     def json_attributes
@@ -88,10 +126,10 @@ module JsonRecord
       read_attribute(field, self)
     end
     
-    def write_json_attribute (json_field_name, field, value, track_changes)
-      write_attribute(field, value, track_changes, self)
+    def write_json_attribute (json_field_name, field, value)
+      write_attribute(field, value, self)
     end
-  
+      
     def changed_attributes
       @changed_attributes ||= {}
     end
@@ -100,17 +138,17 @@ module JsonRecord
       @attributes[name.to_s]
     end
     
-    def attribute_changed? (name)
-      changed_attributes.include?(name.to_s)
-    end
-    
-    def attribute_change (name)
-      name = name.to_s
-      [changed_attributes[name], read_json_attribute(nil, schema.fields[name])] if attribute_changed?(name)
-    end
-    
-    def attribute_was (name)
-      changed_attributes[name.to_s]
-    end
+    # def attribute_changed? (name)
+    #   changed_attributes.include?(name.to_s)
+    # end
+    # 
+    # def attribute_change (name)
+    #   name = name.to_s
+    #   [changed_attributes[name], read_json_attribute(nil, schema.fields[name])] if attribute_changed?(name)
+    # end
+    # 
+    # def attribute_was (name)
+    #   changed_attributes[name.to_s]
+    # end
   end
 end

@@ -36,17 +36,20 @@ describe JsonRecord::EmbeddedDocument do
   end
   
   it "should track changes to attributes" do
-    trait = JsonRecord::Test::Trait.new
+    trait = JsonRecord::Test::Trait.new(:value => "val")
+    trait.value_changed?.should == true
+    trait.value_was.should == nil
+    trait.value_change.should == [nil, "val"]
     trait.name = "test"
     trait.name_was.should == nil
     trait.name_changed?.should == true
     trait.name_change.should == [nil, "test"]
-    trait.changes.should == {"name" => [nil, "test"]}
+    trait.changes.should == {"value" => [nil, "val"], "name" => [nil, "test"]}
     trait.name = nil
     trait.name_changed?.should == false
     trait.name_was.should == nil
     trait.name_change.should == nil
-    trait.changes.should == {}
+    trait.changes.should == {"value" => [nil, "val"]}
   end
   
   it "should convert to attributes to json" do
@@ -60,6 +63,24 @@ describe JsonRecord::EmbeddedDocument do
     (trait_1 == trait_2).should == true
     trait_1.eql?(trait_2).should == true
     (trait_1.hash == trait_2.hash).should == true
+  end
+  
+  it "should read json attributes with []" do
+    dimension = JsonRecord::Test::Dimension.new(:width => 100)
+    dimension[:width].should == 100
+  end
+  
+  it "should be able to write json attributes with []=" do
+    dimension = JsonRecord::Test::Dimension.new
+    dimension[:width] = 100
+    dimension.width.should == 100
+  end
+  
+  it "should set all accessors on initialize" do
+    dimension = JsonRecord::Test::Dimension.new(:width => 100, :height => :infinity, :unit => "meters")
+    dimension.width.should == 100
+    dimension.height.should == 1000000000
+    dimension.unit.should == "meters"
   end
   
 end

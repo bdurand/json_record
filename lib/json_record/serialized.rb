@@ -2,18 +2,21 @@ module JsonRecord
   # Adds the serialized JSON behavior to ActiveRecord.
   module Serialized
     def self.included (base)
-      base.class_inheritable_accessor :json_serialized_fields
-      base.extend(ClassMethods)
+      base.extend(ActsMethods)
     end
     
-    module ClassMethods
+    module ActsMethods
       # Specify a field name that contains serialized JSON. The block will be yielded to with a
       # Schema object that can then be used to define the fields in the JSON document. A class
       # can have multiple fields that store JSON documents if necessary.
       def serialize_to_json (field_name, &block)
+        unless include?(InstanceMethods)
+          class_inheritable_accessor :json_serialized_fields
+          extend ClassMethods
+          include InstanceMethods
+        end
         field_name = field_name.to_s
         self.json_serialized_fields ||= {}
-        include InstanceMethods unless include?(InstanceMethods)
         schema = Schema.new(self, field_name)
         field_schemas = json_serialized_fields[field_name]
         if field_schemas
@@ -25,15 +28,21 @@ module JsonRecord
         field_schemas << schema
         block.call(schema) if block
       end
-      
-      # Get the field definition of the JSON field from the schema it is defined in.
+    end
+    
+    module ClassMethods
+      # Get the json field and the field definition of the JSON field from the schema it is defined in.
       def json_field_definition (name)
-        field = nil
         if json_serialized_fields
           name = name.to_s
-          json_serialized_fields.values.flatten.each{|schema| field = schema.fields[name]; break if field}
+          json_serialized_fields.each_pair do |fname, schemas|
+            schemas.each do |schema|
+              field = schema.fields[name];
+              return [fname, field] if field
+            end
+          end
         end
-        return field
+        return nil
       end
     end
     
@@ -42,6 +51,8 @@ module JsonRecord
         base.before_save :serialize_json_attributes
         base.alias_method_chain :reload, :serialized_json
         base.alias_method_chain :attributes, :serialized_json
+        base.alias_method_chain :read_attribute, :serialized_json
+        base.alias_method_chain :write_attribute, :serialized_json
       end
       
       # Get the JsonField objects for the record.
@@ -55,16 +66,36 @@ module JsonRecord
         @json_fields
       end
       
-      def reload_with_serialized_json (*args)
+      def reload_with_serialized_json (*args) #:nodoc:
         @json_fields = nil
         reload_without_serialized_json(*args)
       end
       
-      def attributes_with_serialized_json
+      def attributes_with_serialized_json #:nodoc:
         attrs = json_attributes.reject{|k,v| !json_field_names.include?(k)}
         attrs.merge!(attributes_without_serialized_json)
         json_serialized_fields.keys.each{|name| attrs.delete(name)}
         return attrs
+      end
+      
+      def read_attribute_with_serialized_json (name)
+        name = name.to_s
+        json_field, field_definition = self.class.json_field_definition(name)
+        if field_definition
+          read_json_attribute(json_field, field_definition)
+        else
+          read_attribute_without_serialized_json(name)
+        end
+      end
+      
+      def write_attribute_with_serialized_json (name, value)
+        name = name.to_s
+        json_field, field_definition = self.class.json_field_definition(name)
+        if field_definition
+          write_json_attribute(json_field, field_definition, value)
+        else
+          write_attribute_without_serialized_json(name, value)
+        end
       end
       
       protected
@@ -82,14 +113,14 @@ module JsonRecord
         @json_field_names = json_serialized_fields.values.flatten.collect{|s| s.fields.keys}.flatten
       end
       
-      # Read a field value from a JsonField
+      # Read a field value from a JsonField.
       def read_json_attribute (json_field_name, field)
         json_fields[json_field_name].read_attribute(field, self)
       end
       
-      # Write a field value to a JsonField
-      def write_json_attribute (json_field_name, field, value, track_changes)
-        json_fields[json_field_name].write_attribute(field, value, track_changes, self)
+      # Write a field value to a JsonField.
+      def write_json_attribute (json_field_name, field, value)
+        json_fields[json_field_name].write_attribute(field, value, self)
       end
       
       # Serialize the JSON in the record into JsonField objects.

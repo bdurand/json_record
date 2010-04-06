@@ -9,11 +9,19 @@ describe JsonRecord::Serialized do
     JsonRecord::Test.drop_tables
   end
   
-  it "should have accessors for json attributes" do
+  it "should have accessors for json attributes and not interfere with column attribute accessors" do
     model = JsonRecord::Test::Model.new
     model.name.should == nil
     model.name = "test"
     model.name.should == "test"
+    model[:name].should == "test"
+    model['name'].should == "test"
+    model[:name] = "new value"
+    model.name.should == "new value"
+    model.string_field = "a"
+    model.string_field.should == "a"
+    model[:string_field] = "b"
+    model[:string_field].should == "b"
   end
   
   it "should convert blank values to nil" do
@@ -145,13 +153,15 @@ describe JsonRecord::Serialized do
       "field_3"=>nil,
       "field_4"=>nil,
       "field_5"=>nil,
+      "unit_price"=>nil,
       "traits"=>[],
       "value"=>0,
       "strings"=>[],
       "map"=>{},
       "verified"=>nil,
       "when"=>nil,
-      "primary_trait"=>nil
+      "primary_trait"=>nil,
+      "dimension"=>nil
     }
     JsonRecord::Test::Model.new.attributes["traits"].should be_a(JsonRecord::EmbeddedDocumentArray)
   end
@@ -227,25 +237,41 @@ describe JsonRecord::Serialized do
   end
   
   it "should track changes on json attributes" do
-    model = JsonRecord::Test::Model.create!(:name => "test name")
+    model = JsonRecord::Test::Model.new(:name => "test name", :primary_trait => {:name => "n1", :value => "v1"})
+    model.changes.should == {"name" => [nil, "test name"]}
+    model.primary_trait.changes.should == {"name" => [nil, "n1"], "value" => [nil, "v1"]}
+    model.save!
     model.changes.should == {}
+    
+    model.reload
+    model.changes.should == {}
+    model.primary_trait.name.should == "n1"
     model.name = "new name"
     model.value = 1
+    model.primary_trait = {:name => "n2", :value => "v2"}
+    
     model.changes.should == {"name" => ["test name", "new name"], "value" => [0, 1]}
     model.name_changed?.should == true
     model.name_was.should == "test name"
     model.name_change.should == ["test name", "new name"]
     model.name = "test name"
     model.changes.should == {"value" => [0, 1]}
-    model.name_changed?.should == false
+    model.name_changed?.should be_blank
     model.name_was.should == "test name"
     model.name_change.should == nil
+    
+    model.reset_value!
+    model.value_changed?.should == false
+    model.value.should == 0
+    
+    model.value_will_change!
+    model.value_changed?.should == true
   end
   
   it "should validate the presence of a json attribute" do
     model = JsonRecord::Test::Model.new
     model.valid?.should == false
-    model.errors[:name].should_not == nil
+    model.errors[:name].should_not be_blank
     model.name = "woo"
     model.valid?.should == true
   end
@@ -253,16 +279,16 @@ describe JsonRecord::Serialized do
   it "should validate the length of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "this name value is way too long", :field_4 => "a", :field_5 => "b")
     model.valid?.should == false
-    model.errors[:name].should_not be_empty
-    model.errors[:field_4].should_not be_empty
-    model.errors[:field_5].should_not be_empty
+    model.errors[:name].should_not be_blank
+    model.errors[:field_4].should_not be_blank
+    model.errors[:field_5].should_not be_blank
     model.name = "shorter name"
     model.field_4 = "a much longer name that won't fit"
     model.field_5 = "a much longer name that will fit because it is OK"
     model.valid?.should == false
-    model.errors[:name].should be_empty
-    model.errors[:field_4].should_not be_empty
-    model.errors[:field_5].should be_empty
+    model.errors[:name].should be_blank
+    model.errors[:field_4].should_not be_blank
+    model.errors[:field_5].should be_blank
     model.field_4 = "just right"
     model.valid?.should == true
   end
@@ -270,11 +296,11 @@ describe JsonRecord::Serialized do
   it "should validate the type of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "test name", :value => "purple", :price => "free", :when => "2010-40-52", :verified_at => "2010-40-50T00:00:00", :viewed_at => "2010-02-01T00:90:00")
     model.valid?.should == false
-    model.errors[:value].should_not == nil
-    model.errors[:price].should_not == nil
-    model.errors[:when].should_not == nil
-    model.errors[:verified_at].should_not == nil
-    model.errors[:viewed_at].should_not == nil
+    model.errors[:value].should_not be_blank
+    model.errors[:price].should_not be_blank
+    model.errors[:when].should_not be_blank
+    model.errors[:verified_at].should_not be_blank
+    model.errors[:viewed_at].should_not be_blank
     model.value = "1"
     model.price = "100"
     model.when = "2010-02-01"
@@ -286,7 +312,7 @@ describe JsonRecord::Serialized do
   it "should validate that a json attribute is in a range" do
     model = JsonRecord::Test::Model.new(:name => "test name", :field_3 => "Z")
     model.valid?.should == false
-    model.errors[:field_3].should_not == nil
+    model.errors[:field_3].should_not be_blank
     model.field_3 = "B"
     model.valid?.should == true
   end
@@ -294,7 +320,7 @@ describe JsonRecord::Serialized do
   it "should validate the format of a json attribute" do
     model = JsonRecord::Test::Model.new(:name => "test name", :field_2 => "ABC")
     model.valid?.should == false
-    model.errors[:field_2].should_not == nil
+    model.errors[:field_2].should_not be_blank
     model.field_2 = "abc"
     model.valid?.should == true
   end
@@ -383,23 +409,31 @@ describe JsonRecord::Serialized do
   end
   
   it "should get the json field definition for a field" do
-    JsonRecord::Test::Model.json_field_definition(:value).name.should == "value"
-    JsonRecord::Test::Model.json_field_definition("value").name.should == "value"
-    JsonRecord::Test::Model.json_field_definition("nothing").should == nil
+    json_field, field = JsonRecord::Test::Model.json_field_definition(:value)
+    json_field.should == "json"
+    field.name.should == "value"
+    
+    json_field, field = JsonRecord::Test::Model.json_field_definition("field_1")
+    json_field.should == "compressed_json"
+    field.name.should == "field_1"
+    
+    json_field, field = JsonRecord::Test::Model.json_field_definition("nothing")
+    json_field.should == nil
+    field.should == nil
   end
   
   it "should validate uniqueness of embedded documents" do
     model = JsonRecord::Test::Model.new(:name => "test", :traits => [{:name => "n1", :value => "v1"}, {:name => "n1", :value => "v2"}])
     model.valid?.should == false
-    model.errors[:traits].should_not == nil
-    model.traits.first.errors[:name].should be_empty
-    model.traits.last.errors[:name].should_not be_empty
+    model.errors[:traits].should_not be_blank
+    model.traits.first.errors[:name].should be_blank
+    model.traits.last.errors[:name].should_not be_blank
     
     model.traits.last.name = "n2"
     model.valid?.should == true
-    model.errors[:traits].should be_empty
-    model.traits.first.errors[:name].should be_empty
-    model.traits.last.errors[:name].should be_empty
+    model.errors[:traits].should be_blank
+    model.traits.first.errors[:name].should be_blank
+    model.traits.last.errors[:name].should be_blank
   end
   
   it "should perform validations on embedded documents" do
@@ -408,23 +442,35 @@ describe JsonRecord::Serialized do
     trait = model.traits.build(:value => "v1")
     subtrait = trait.sub_traits.build(:name => "s1", :count => "plaid")
     model.valid?.should == false
-    model.errors[:primary_trait].should_not be_empty
-    model.errors[:traits].should_not be_empty
-    model.primary_trait.errors[:name].should_not be_empty
-    trait.errors[:name].should_not be_empty
-    trait.errors[:sub_traits].should_not be_empty
-    subtrait.errors[:count].should_not be_empty
+    model.errors[:primary_trait].should_not be_blank
+    model.errors[:traits].should_not be_blank
+    model.primary_trait.errors[:name].should_not be_blank
+    trait.errors[:name].should_not be_blank
+    trait.errors[:sub_traits].should_not be_blank
+    subtrait.errors[:count].should_not be_blank
     
     model.primary_trait.name = "p1"
     trait.name = "n1"
     subtrait.count = 1
     model.valid?.should == true
-    model.errors[:primary_trait].should be_empty
-    model.errors[:traits].should be_empty
-    model.primary_trait.errors[:name].should be_empty
-    trait.errors[:name].should be_empty
-    trait.errors[:sub_traits].should be_empty
-    subtrait.errors[:count].should be_empty
+    model.errors[:primary_trait].should be_blank
+    model.errors[:traits].should be_blank
+    model.primary_trait.errors[:name].should be_blank
+    trait.errors[:name].should be_blank
+    trait.errors[:sub_traits].should be_blank
+    subtrait.errors[:count].should be_blank
   end
   
+  it "should perform validation callbacks on embedded documents" do
+    trait = JsonRecord::Test::Trait.new(:name => "name")
+    trait.valid?.should == true
+    trait.callbacks.should == [:before_validation, :after_validation]
+  end
+  
+  it "should allow overriding the attribute reader and writers" do
+    model = JsonRecord::Test::Model.new(:unit_price => :infinity)
+    model.unit_price.should == 1000000000
+    model.unit_price = 1.2253
+    model.unit_price.should == 1.23
+  end
 end

@@ -26,18 +26,29 @@ module JsonRecord
       @attributes = {}
       @schemas.each do |schema|
         schema.fields.values.each do |field|
-          @attributes[field.name] = field.multivalued? ? EmbeddedDocumentArray.new(field.type, self) : field.default
+          @attributes[field.name] = field.multivalued? ? EmbeddedDocumentArray.new(field.type, @record) : field.default
         end
       end
       
       unless @record[@name].blank?
         json = @record[@name]
         json = Zlib::Inflate.inflate(json) if @compressed
-        ActiveSupport::JSON.decode(json).each_pair do |attr_name, attr_value|
-          field = nil
-          @schemas.each{|schema| field = schema.fields[attr_name]; break if field}
-          field = FieldDefinition.new(attr_name, :type => attr_value.class) unless field
-          write_attribute(field, attr_value, false, @record)
+        do_not_track_changes = Thread.current[:do_not_track_json_field_changes]
+        Thread.current[:do_not_track_json_field_changes] = true
+        begin
+          ActiveSupport::JSON.decode(json).each_pair do |attr_name, attr_value|
+            setter = "#{attr_name}=".to_sym
+            if @record.respond_to?(setter)
+              @record.send(setter, attr_value)
+            else
+              field = nil
+              @schemas.each{|schema| field = schema.fields[attr_name]; break if field}
+              field = FieldDefinition.new(attr_name, :type => attr_value.class) unless field
+              write_attribute(field, attr_value, @record)
+            end
+          end
+        ensure
+          Thread.current[:do_not_track_json_field_changes] = do_not_track_changes
         end
       end
     end
