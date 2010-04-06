@@ -34,7 +34,7 @@ begin
     gem.homepage = "http://github.com/bdurand/json_record"
     gem.authors = ["Brian Durand"]
   
-    gem.add_dependency('activerecord', '>= 3.0.0')
+    gem.add_dependency('activerecord', '>= 3.0.0.beta2')
     gem.add_development_dependency('rspec', '>= 1.3.0')
     gem.add_development_dependency('jeweler')
   end
