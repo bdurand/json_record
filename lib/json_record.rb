@@ -11,12 +11,14 @@ unless defined?(Boolean)
   end
 end
 
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'schema'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'attribute_methods'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embedded_document'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embedded_document_array'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'field_definition'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'json_field'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'serialized'))
+module JsonRecord
+  autoload :Schema, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'schema'))
+  autoload :AttributeMethods, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'attribute_methods'))
+  autoload :EmbeddedDocument, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embedded_document'))
+  autoload :EmbeddedDocumentArray, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embedded_document_array'))
+  autoload :FieldDefinition, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'field_definition'))
+  autoload :JsonField, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'json_field'))
+  autoload :Serialized, File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'serialized'))
+end
 
 ActiveRecord::Base.send(:include, JsonRecord::Serialized)

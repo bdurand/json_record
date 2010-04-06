@@ -63,7 +63,7 @@ module JsonRecord
     end
     
     def changed_attributes
-      @record.send(:changed_attributes)
+      @record.instance_variable_get(:@changed_attributes)
     end
     
   end

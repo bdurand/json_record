@@ -131,6 +131,8 @@ module JsonRecord
         @klass.send(:define_method, "#{field.name}_changed?") {self.send(:attribute_changed?, field.name)}
         @klass.send(:define_method, "#{field.name}_change") {self.send(:attribute_change, field.name)}
         @klass.send(:define_method, "#{field.name}_was") {self.send(:attribute_was, field.name)}
+        @klass.send(:define_method, "#{field.name}_will_change!") {self.send(:attribute_will_change!, field.name)}
+        @klass.send(:define_method, "reset_#{field.name}!") {self.send(:reset_attribute!, field.name)}
       end
     end
     
