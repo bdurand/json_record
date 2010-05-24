@@ -60,23 +60,8 @@ module JsonRecord
     
     # Get the attribute values of the document before they were type cast.
     def attributes_before_type_cast
-      @attributes
+      json_attributes_before_type_cast
     end
-    # 
-    # # Determine if the document has been changed.
-    # def changed?
-    #   !changed_attributes.empty?
-    # end
-    # 
-    # # Get the list of attributes changed.
-    # def changed
-    #   changed_attributes.keys
-    # end
-    # 
-    # # Get a list of changes to the document.
-    # def changes
-    #   changed.inject({}) {|h, attr| h[attr] = attribute_change(attr); h}
-    # end
     
     # Get a field from the schema with the specified name.
     def [] (name)
@@ -122,6 +107,10 @@ module JsonRecord
       @json_attributes
     end
     
+    def json_attributes_before_type_cast
+      @attributes
+    end
+    
     def read_json_attribute (json_field_name, field)
       read_attribute(field, self)
     end
@@ -137,18 +126,5 @@ module JsonRecord
     def read_attribute_before_type_cast (name)
       @attributes[name.to_s]
     end
-    
-    # def attribute_changed? (name)
-    #   changed_attributes.include?(name.to_s)
-    # end
-    # 
-    # def attribute_change (name)
-    #   name = name.to_s
-    #   [changed_attributes[name], read_json_attribute(nil, schema.fields[name])] if attribute_changed?(name)
-    # end
-    # 
-    # def attribute_was (name)
-    #   changed_attributes[name.to_s]
-    # end
   end
 end

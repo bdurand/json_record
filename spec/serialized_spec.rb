@@ -268,6 +268,14 @@ describe JsonRecord::Serialized do
     model.value_changed?.should == true
   end
   
+  it "should track the value before type casting on json attributes" do
+    model = JsonRecord::Test::Model.new
+    model.name = "test"
+    model.value = "1"
+    model.name_before_type_cast.should == "test"
+    model.value_before_type_cast.should == "1"
+  end
+  
   it "should validate the presence of a json attribute" do
     model = JsonRecord::Test::Model.new
     model.valid?.should == false

@@ -50,5 +50,10 @@ module JsonRecord
       self << obj
       obj
     end
+    
+    def to_json (*args)
+      # TODO this was required by a bug in Rails 3.0.beta3; remove later
+      ActiveSupport::JSON.encode(self, args.first)
+    end
   end
 end

@@ -22,7 +22,7 @@ module JsonRecord
     
     # Get the default value.
     def default
-      (@default.dup rescue @default )if @default
+      (@default.dup rescue @default) if @default
     end
     
     # Indicates the field is multivalued.

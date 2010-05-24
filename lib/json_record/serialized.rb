@@ -53,6 +53,8 @@ module JsonRecord
         base.alias_method_chain :attributes, :serialized_json
         base.alias_method_chain :read_attribute, :serialized_json
         base.alias_method_chain :write_attribute, :serialized_json
+        base.alias_method_chain :read_attribute_before_type_cast, :serialized_json
+        base.alias_method_chain :attributes_before_type_cast, :serialized_json
       end
       
       # Get the JsonField objects for the record.
@@ -66,8 +68,13 @@ module JsonRecord
         @json_fields
       end
       
+      def json_attributes_before_type_cast # :nodoc:
+        @json_attributes_before_type_cast ||= {}
+      end
+            
       def reload_with_serialized_json (*args) #:nodoc:
         @json_fields = nil
+        @json_attributes_before_type_cast = nil
         reload_without_serialized_json(*args)
       end
       
@@ -76,6 +83,14 @@ module JsonRecord
         attrs.merge!(attributes_without_serialized_json)
         json_serialized_fields.keys.each{|name| attrs.delete(name)}
         return attrs
+      end
+      
+      def read_attribute_before_type_cast_with_serialized_json (attr_name) #:nodoc:
+        json_attributes_before_type_cast[attr_name.to_s] || read_attribute_before_type_cast_without_serialized_json(attr_name)
+      end
+
+      def attributes_before_type_cast_with_serialized_json #:nodoc:
+        json_attributes_before_type_cast.merge(attributes_before_type_cast_without_serialized_json)
       end
       
       def read_attribute_with_serialized_json (name)
@@ -109,7 +124,7 @@ module JsonRecord
         attrs
       end
       
-      def json_field_names
+      def json_field_names # :nodoc:
         @json_field_names = json_serialized_fields.values.flatten.collect{|s| s.fields.keys}.flatten
       end
       
