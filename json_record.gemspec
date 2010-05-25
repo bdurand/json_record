@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{json_record}
-  s.version = "1.1.0.b3"
+  s.version = "1.1.0.b4"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-05-24}
+  s.date = %q{2010-05-25}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
     "README.rdoc"
