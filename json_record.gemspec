@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{json_record}
-  s.version = "1.1.0.b4"
+  s.version = "1.1.0.b6"
 
   s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
