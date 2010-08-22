@@ -59,6 +59,7 @@ module JsonRecord
         schema.key :name, String, :required => true, :length => 15
         schema.key :value, Integer, :default => 0
         schema.key :price, Float
+        schema.key :ratio, BigDecimal
         schema.key :verified, Boolean
         schema.key :when, Date
         schema.key :verified_at, Time
@@ -77,6 +78,7 @@ module JsonRecord
         schema.key :field_4, :length => (4..15)
         schema.key :field_5, :length => {:minimum => 5}
         schema.key :unit_price, Float
+        schema.key :unit_ratio, BigDecimal
       end
       
       def unit_price

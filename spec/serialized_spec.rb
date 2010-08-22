@@ -94,6 +94,12 @@ describe JsonRecord::Serialized do
     model.strings.should == ["a", "b"]
   end
   
+  it "should convert values to BigDecimal" do
+  	model = JsonRecord::Test::Model.new
+  	model.price = '5.55'
+  	model.price.should == BigDecimal.new('5.55')
+  end
+  
   it "should convert a hash to an embedded document" do
     model = JsonRecord::Test::Model.new
     model.primary_trait = {:name => "thing", :value => "stuff"}
@@ -145,6 +151,7 @@ describe JsonRecord::Serialized do
     JsonRecord::Test::Model.new.attributes.should == {
       "name"=>nil,
       "price"=>nil,
+      "ratio"=>nil,
       "string_field"=>nil,
       "verified_at"=>nil,
       "viewed_at"=>nil,
@@ -154,6 +161,7 @@ describe JsonRecord::Serialized do
       "field_4"=>nil,
       "field_5"=>nil,
       "unit_price"=>nil,
+      "unit_ratio"=>nil,
       "traits"=>[],
       "value"=>0,
       "strings"=>[],
