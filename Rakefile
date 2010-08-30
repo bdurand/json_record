@@ -30,11 +30,13 @@ begin
   Jeweler::Tasks.new do |gem|
     gem.name = "json_record"
     gem.summary = %Q{ActiveRecord support for mapping complex documents in a single RDBMS row via JSON serialization.}
+    gem.description = %Q{Gem that addes support to ActiveRecord for mapping complex documents in a single relational database row using JSON serialization.}
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/json_record"
     gem.authors = ["Brian Durand"]
+    gem.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc"]
   
-    gem.add_dependency('activerecord', '>= 3.0.0.beta2')
+    gem.add_dependency('activerecord', '>= 3.0.0')
     gem.add_development_dependency('rspec', '>= 1.3.0')
     gem.add_development_dependency('jeweler')
   end

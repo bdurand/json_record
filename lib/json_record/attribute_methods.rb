@@ -37,7 +37,7 @@ module JsonRecord
             if changes.include?(field.name)
               changes.delete(field.name) if converted_value == changes[field.name]
             else
-              old_value = (old_value.clone rescue old_value) unless old_value.nil?
+              old_value = (old_value.clone rescue old_value) unless old_value.nil? || old_value.is_a?(Numeric) || old_value.is_a?(Symbol) || old_value.is_a?(TrueClass) || old_value.is_a?(FalseClass)
               changes[field.name] = old_value
             end
           end

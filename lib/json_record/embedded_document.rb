@@ -79,11 +79,19 @@ module JsonRecord
       @json_attributes.to_json(*args)
     end
     
+    def to_hash
+      @json_attributes
+    end
+    
     def eql? (val)
       val.class == self.class && val.attributes == attributes && val.parent == parent
     end
     
     def == (val)
+      eql?(val)
+    end
+    
+    def equal? (val)
       eql?(val)
     end
     
