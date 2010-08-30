@@ -99,5 +99,13 @@ module JsonRecord
         schema.key :another_field
       end
     end
+
+    class Broken < ActiveRecord::Base
+      set_table_name :models
+      serialize_to_json(:no_such_column) do |schema|
+        schema.key :name, String
+        schema.key :value, String
+      end
+    end
   end
 end

@@ -474,4 +474,12 @@ describe JsonRecord::Serialized do
     model.unit_price = 1.2253
     model.unit_price.should == 1.23
   end
+
+  it "should blow up if the json column doesn't exist" do
+    lambda{JsonRecord::Test::Broken.new(:name => "Test", :value => "Moo")}.should raise_error
+  end
+  
+  it "should blow up if trying to set a json attribute hasn't been defined" do
+    lambda{model = JsonRecord::Test::Model.new(:undefined_attribute => "what?")}.should raise_error
+  end
 end
