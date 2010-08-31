@@ -5,23 +5,18 @@
 
 Gem::Specification.new do |s|
   s.name = %q{json_record}
-  s.version = "1.1.0.b4"
+  s.version = "1.0.8"
 
-  s.required_rubygems_version = Gem::Requirement.new("> 1.3.1") if s.respond_to? :required_rubygems_version=
+  s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Brian Durand"]
-  s.date = %q{2010-05-25}
+  s.date = %q{2010-08-31}
   s.email = %q{brian@embellishedvisions.com}
   s.extra_rdoc_files = [
     "README.rdoc"
   ]
   s.files = [
-    "CHANGE_LOG",
-     "MIT_LICENSE",
-     "README.rdoc",
+    "README.rdoc",
      "Rakefile",
-     "VERSION",
-     "init.rb",
-     "json_record.gemspec",
      "lib/json_record.rb",
      "lib/json_record/attribute_methods.rb",
      "lib/json_record/embedded_document.rb",
@@ -56,17 +51,17 @@ Gem::Specification.new do |s|
     s.specification_version = 3
 
     if Gem::Version.new(Gem::VERSION) >= Gem::Version.new('1.2.0') then
-      s.add_runtime_dependency(%q<activerecord>, [">= 3.0.0.beta2"])
-      s.add_development_dependency(%q<rspec>, [">= 1.3.0"])
+      s.add_runtime_dependency(%q<activerecord>, [">= 2.2.2"])
+      s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
       s.add_development_dependency(%q<jeweler>, [">= 0"])
     else
-      s.add_dependency(%q<activerecord>, [">= 3.0.0.beta2"])
-      s.add_dependency(%q<rspec>, [">= 1.3.0"])
+      s.add_dependency(%q<activerecord>, [">= 2.2.2"])
+      s.add_dependency(%q<rspec>, [">= 1.2.9"])
       s.add_dependency(%q<jeweler>, [">= 0"])
     end
   else
-    s.add_dependency(%q<activerecord>, [">= 3.0.0.beta2"])
-    s.add_dependency(%q<rspec>, [">= 1.3.0"])
+    s.add_dependency(%q<activerecord>, [">= 2.2.2"])
+    s.add_dependency(%q<rspec>, [">= 1.2.9"])
     s.add_dependency(%q<jeweler>, [">= 0"])
   end
 end
