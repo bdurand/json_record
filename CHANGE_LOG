@@ -29,3 +29,6 @@
 
 1.0.8
   - Fix Rakefile so it loads even without rspec
+  - Optimize setting attributes for classes that don't support dup
+  - Compatibility with Rails 3.0
+  - Use BigDecimal instead of Float for better accurracy (thanks to aliix)
