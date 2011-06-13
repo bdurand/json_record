@@ -1,9 +1,7 @@
 require 'active_record'
 
-begin
-  require 'json'
-rescue LoadError
-  ActiveRecord::Base.logger.warn("*** You really should install the json gem for optimal performance with json_record ***")
+unless defined?(Yajl) || defined?(JSON)
+  ActiveRecord::Base.logger.warn("*** You really should install the json or yajl gem for optimal performance with json_record ***")
 end
 
 unless defined?(Boolean)
@@ -11,12 +9,14 @@ unless defined?(Boolean)
   end
 end
 
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'schema'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'attribute_methods'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embedded_document'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'embedded_document_array'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'field_definition'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'json_field'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'json_record', 'serialized'))
+module JsonRecord
+  autoload :AttributeMethods, File.expand_path("../json_record/attribute_methods.rb", __FILE__)
+  autoload :EmbeddedDocument, File.expand_path("../json_record/embedded_document.rb", __FILE__)
+  autoload :EmbeddedDocumentArray, File.expand_path("../json_record/embedded_document_array.rb", __FILE__)
+  autoload :FieldDefinition, File.expand_path("../json_record/field_definition.rb", __FILE__)
+  autoload :JsonField, File.expand_path("../json_record/json_field.rb", __FILE__)
+  autoload :Schema, File.expand_path("../json_record/schema.rb", __FILE__)
+  autoload :Serialized, File.expand_path("../json_record/serialized.rb", __FILE__)
+end
 
 ActiveRecord::Base.send(:include, JsonRecord::Serialized)
