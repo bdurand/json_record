@@ -32,11 +32,12 @@ begin
     gem.email = "brian@embellishedvisions.com"
     gem.homepage = "http://github.com/bdurand/json_record"
     gem.authors = ["Brian Durand"]
-    gem.files = FileList["lib/**/*", "spec/**/*", "README.rdoc", "Rakefile"].to_a
+    gem.files = FileList["lib/**/*", "spec/**/*", "README.rdoc", "Rakefile", "MIT_LICENSE"].to_a
     gem.has_rdoc = true
     gem.extra_rdoc_files = ["README.rdoc"]
+    gem.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc"]
   
-    gem.add_dependency('activerecord', '>= 2.2.2')
+    gem.add_dependency('activerecord', '>= 3.0.0')
     gem.add_development_dependency('rspec', '>=2.0.0')
     gem.add_development_dependency('jeweler')
   end

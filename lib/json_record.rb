@@ -1,7 +1,9 @@
 require 'active_record'
 
 unless defined?(Yajl) || defined?(JSON)
-  ActiveRecord::Base.logger.warn("*** You really should install the json or yajl gem for optimal performance with json_record ***")
+  if ActiveRecord::Base.logger
+    ActiveRecord::Base.logger.warn("*** You really should install the json or yajl gem for optimal performance with json_record ***")
+  end
 end
 
 unless defined?(Boolean)

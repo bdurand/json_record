@@ -1,12 +1,11 @@
 require 'rubygems'
 
-active_record_version = ENV["ACTIVE_RECORD_VERSION"] || [">=2.2.2", "<=2.9.9"]
+active_record_version = ENV["ACTIVE_RECORD_VERSION"] || [">=3.0.0"]
 active_record_version = [active_record_version] unless active_record_version.is_a?(Array)
 gem 'activerecord', *active_record_version
 
 require 'active_record'
-puts "Testing Against ActiveRecord #{ActiveRecord::VERSION::STRING}" if defined?(ActiveRecord::VERSION)
-ActiveRecord.load_all! if ActiveRecord.respond_to?(:load_all!)
+puts "Testing Against ActiveRecord #{ActiveRecord::VERSION::STRING}"
 
-require File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'json_record'))
-require File.expand_path(File.join(File.dirname(__FILE__), 'test_models'))
+require File.expand_path("../../lib/json_record.rb", __FILE__)
+require File.expand_path("../test_models.rb", __FILE__)

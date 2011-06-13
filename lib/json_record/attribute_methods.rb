@@ -47,7 +47,7 @@ module JsonRecord
             json_attributes.delete(field.name)
           end
         end
-        context.attributes_before_type_cast[field.name] = val
+        context.json_attributes_before_type_cast[field.name] = val
       end
       return val
     end
