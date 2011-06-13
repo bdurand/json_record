@@ -1,23 +1,22 @@
 require 'rubygems'
 require 'rake'
-require 'rake/rdoctask'
+require 'rdoc/task'
 
 desc 'Default: run unit tests.'
 task :default => :test
 
 begin
-  require 'spec/rake/spectask'
-  desc 'Test json_record.'
-  Spec::Rake::SpecTask.new(:test) do |t|
-    t.spec_files = FileList.new('spec/**/*_spec.rb')
-  end
+  require 'rspec'
+  require 'rspec/core/rake_task'
+  desc 'Run the unit tests'
+  RSpec::Core::RakeTask.new(:test)
 rescue LoadError
   task :test do
-    STDERR.puts "You must have rspec >= 1.2.9 to run the tests"
+    STDERR.puts "You must have rspec 2.0 installed to run the tests"
   end
 end
 
-desc 'Generate documentation for json_record.'
+desc 'Generate rdoc documentation'
 Rake::RDocTask.new(:rdoc) do |rdoc|
   rdoc.rdoc_dir = 'rdoc'
   rdoc.options << '--title' << 'JSON Record' << '--line-numbers' << '--inline-source' << '--main' << 'README.rdoc'
@@ -38,7 +37,7 @@ begin
     gem.extra_rdoc_files = ["README.rdoc"]
   
     gem.add_dependency('activerecord', '>= 2.2.2')
-    gem.add_development_dependency('rspec', '>= 1.2.9')
+    gem.add_development_dependency('rspec', '>=2.0.0')
     gem.add_development_dependency('jeweler')
   end
 
