@@ -6,10 +6,12 @@ module JsonRecord
     
     def initialize (record, name, schemas)
       @record = record
-      @name = name
+      @name = name.to_s
       @schemas = schemas
       @attributes = nil
-      @compressed = record.class.columns_hash[name].type == :binary
+      json_column = record.class.columns_hash[@name]
+      raise ArgumentError.new("column #{name} does not exist in #{table_name}") unless json_column
+      @compressed = json_column.type == :binary
     end
     
     def serialize

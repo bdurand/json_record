@@ -16,8 +16,8 @@ module JsonRecord
       base.alias_method_chain(:valid?, :callbacks)
       base.extend ValidationCallbacks
       
-      base.write_inheritable_attribute(:schema, Schema.new(base, nil))
-      base.class_inheritable_reader :schema
+      base.class_attribute :schema
+      base.schema = Schema.new(base, nil)
     end
     
     module ValidationCallbacks #:nodoc:

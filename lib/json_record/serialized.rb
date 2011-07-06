@@ -11,16 +11,16 @@ module JsonRecord
       # can have multiple fields that store JSON documents if necessary.
       def serialize_to_json (field_name, &block)
         unless include?(InstanceMethods)
-          class_inheritable_accessor :json_serialized_fields
+          class_attribute :json_serialized_fields
           extend ClassMethods
           include InstanceMethods
         end
         field_name = field_name.to_s
-        self.json_serialized_fields ||= {}
+        self.json_serialized_fields = json_serialized_fields ? json_serialized_fields.clone : {}
         schema = Schema.new(self, field_name)
         field_schemas = json_serialized_fields[field_name]
         if field_schemas
-          field_schemas = field_schemas.dup
+          field_schemas = field_schemas.clone
         else
           field_schemas = []
         end
@@ -55,6 +55,10 @@ module JsonRecord
         base.alias_method_chain :write_attribute, :serialized_json
         base.alias_method_chain :read_attribute_before_type_cast, :serialized_json
         base.alias_method_chain :attributes_before_type_cast, :serialized_json
+        # Alias method chain doesn't work on [] methods and these are aliased directly in Rails 3.1
+        base.send :alias_method, :[], :read_attribute_with_serialized_json
+        base.send :alias_method, :[]=, :write_attribute_with_serialized_json
+        base.send :public, :[], :[]=
       end
       
       # Get the JsonField objects for the record.
@@ -93,6 +97,8 @@ module JsonRecord
         json_attributes_before_type_cast.merge(attributes_before_type_cast_without_serialized_json)
       end
       
+      protected
+      
       def read_attribute_with_serialized_json (name)
         name = name.to_s
         json_field, field_definition = self.class.json_field_definition(name)
@@ -112,8 +118,6 @@ module JsonRecord
           write_attribute_without_serialized_json(name, value)
         end
       end
-      
-      protected
       
       # Returns a hash of all the JsonField objects merged together.
       def json_attributes

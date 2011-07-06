@@ -95,9 +95,9 @@ describe JsonRecord::Serialized do
   end
   
   it "should convert values to BigDecimal" do
-  	model = JsonRecord::Test::Model.new
-  	model.price = '5.55'
-  	model.price.should == BigDecimal.new('5.55')
+    model = JsonRecord::Test::Model.new
+    model.price = '5.55'
+    model.price.should == BigDecimal.new('5.55')
   end
   
   it "should convert a hash to an embedded document" do
@@ -148,7 +148,9 @@ describe JsonRecord::Serialized do
   end
   
   it "should initialize json attributes with blank values" do
-    JsonRecord::Test::Model.new.attributes.should == {
+    json_attributes = JsonRecord::Test::Model.new.attributes
+    json_attributes.delete('id').should == nil
+    json_attributes.should == {
       "name"=>nil,
       "price"=>nil,
       "ratio"=>nil,
@@ -202,7 +204,7 @@ describe JsonRecord::Serialized do
   
   it "should reserialize json attributes into a JSON field" do
     model = JsonRecord::Test::Model.new(:name => "test name", :value => 1)
-    model.save!
+    model.save! rescue puts  $@.join("\n")
     model = JsonRecord::Test::Model.find(model.id)
     ActiveSupport::JSON.decode(model.json).should == {"name" => "test name", "value" => 1}
     model.value = 2
@@ -487,7 +489,7 @@ describe JsonRecord::Serialized do
     model.unit_price = 1.2253
     model.unit_price.should == 1.23
   end
-
+  
   it "should blow up if the json column doesn't exist" do
     lambda{JsonRecord::Test::Broken.new(:name => "Test", :value => "Moo")}.should raise_error
   end

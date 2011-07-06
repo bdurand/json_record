@@ -1,34 +1,40 @@
-1.0.0
-  - Initial release
-  
-1.0.1
-  - Fixed bug where embedded documents couldn't reference the schema until a field was defined
+1.1.1
+  - Rails 3.1.0.rc4 compatibility
 
-1.0.2
-  - Changed EmbeddedDocument to be a module instead of a class to fix inheritance problem with validations
-  - Remove key and many methods from EmbeddedDocument in favor of always calling the schema
-
-1.0.3
-  - Added before and after validation callbacks on EmbeddedDocument
-  - Fixed bug where fields couldn't be set to false
-
-1.0.4
-  - Fixed bug with tracking changes when initializing an EmbeddedDocument.
-  - Removed tracking changes of keys that are EmbeddedDocuments
-
-1.0.5
-  - Fixed bug with initializing new EmbeddedDocumentArray with the proper parent when there is no data to deserialize.
-
-1.0.6
-  - Allow EmbeddedDocument.new to call all accessors and not just those defined in the JSON schema.
-  - Allow getting and setting json attributes with [] and []=
-
-1.0.7
-  - Added attributes= to EmbeddedDocument for mass attribute assignment
-  - Changed deserialized Json values to go through setter methods instead of being directly set
+1.1.0
+  - Rails 3.0 compatibility
 
 1.0.8
   - Fix Rakefile so it loads even without rspec
   - Optimize setting attributes for classes that don't support dup
   - Compatibility with Rails 3.0
   - Use BigDecimal instead of Float for better accurracy (thanks to aliix)
+
+1.0.7
+  - Added attributes= to EmbeddedDocument for mass attribute assignment
+  - Changed deserialized Json values to go through setter methods instead of being directly set
+
+1.0.6
+  - Allow EmbeddedDocument.new to call all accessors and not just those defined in the JSON schema.
+  - Allow getting and setting json attributes with [] and []=
+
+1.0.5
+  - Fixed bug with initializing new EmbeddedDocumentArray with the proper parent when there is no data to deserialize.
+
+1.0.4
+  - Fixed bug with tracking changes when initializing an EmbeddedDocument.
+  - Removed tracking changes of keys that are EmbeddedDocuments
+
+1.0.3
+  - Added before and after validation callbacks on EmbeddedDocument
+  - Fixed bug where fields couldn't be set to false
+
+1.0.2
+  - Changed EmbeddedDocument to be a module instead of a class to fix inheritance problem with validations
+  - Remove key and many methods from EmbeddedDocument in favor of always calling the schema
+
+1.0.1
+  - Fixed bug where embedded documents couldn't reference the schema until a field was defined
+
+1.0.0
+  - Initial release

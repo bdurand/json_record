@@ -34,7 +34,7 @@ begin
     gem.authors = ["Brian Durand"]
     gem.files = FileList["lib/**/*", "spec/**/*", "README.rdoc", "Rakefile", "MIT_LICENSE"].to_a
     gem.has_rdoc = true
-    gem.extra_rdoc_files = ["README.rdoc"]
+    gem.extra_rdoc_files = ["README.rdoc", "MIT_LICENSE"]
     gem.rdoc_options = ["--charset=UTF-8", "--main", "README.rdoc"]
   
     gem.add_dependency('activerecord', '>= 3.0.0')
